@@ -466,6 +466,7 @@ textarea { resize: vertical; }
 .status-chip.agendada { color: #7a5a09; background: #f8ecc8; }
 .status-chip.andamento { color: #215c43; background: #d8f0dd; }
 .status-chip.concluida { color: #1d6a33; background: #dff2e2; }
+.status-chip.cancelada { color: #8a1c1c; background: #fde8e8; }
 
 .service-card,
 .picker-card,
@@ -579,4 +580,181 @@ textarea { resize: vertical; }
   .service-icon { width: 56px; height: 56px; }
   .summary-services { grid-template-columns: 1fr; }
   .admin-order-side { width: 100%; min-width: 0; }
+}
+
+.sidebar-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: rgba(244, 251, 242, 0.7);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+.sidebar-divider::before,
+.sidebar-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.admin-grid {
+  margin-top: 18px;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.95fr);
+}
+
+.compact-list {
+  gap: 12px;
+}
+
+.admin-list-row,
+.empty-state-card {
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: rgba(244, 250, 244, 0.92);
+  border: 1px solid rgba(24, 51, 34, 0.08);
+}
+
+.admin-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.service-admin-row {
+  align-items: flex-start;
+}
+
+.service-admin-main {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+}
+
+.inline-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.danger-button {
+  background: #fff1f1;
+  color: #a13636;
+}
+
+.success-button {
+  background: #e9f7eb;
+  color: #1f6e36;
+}
+
+.inline-toggle {
+  align-content: start;
+}
+
+.inline-toggle input {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+}
+
+.client-card {
+  display: grid;
+  gap: 14px;
+}
+
+.client-history {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.client-history-item {
+  padding: 14px;
+  border-radius: 18px;
+  background: #f4faf2;
+}
+
+.client-history-item strong {
+  display: block;
+  font-family: "Outfit", sans-serif;
+  font-size: 1.1rem;
+}
+
+.client-history-item span {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+}
+
+.admin-user-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.inline-price-pill {
+  margin-top: 10px;
+}
+
+.summary-total-box {
+  padding: 16px;
+  border-radius: 18px;
+  background: #f4faf2;
+  display: grid;
+  align-content: center;
+}
+
+.summary-total-box strong {
+  font-family: "Outfit", sans-serif;
+  font-size: 1.5rem;
+}
+
+.budget-row {
+  align-items: flex-start;
+}
+
+.budget-main {
+  display: grid;
+  gap: 10px;
+  flex: 1;
+}
+
+.budget-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-whats-link {
+  min-height: 48px;
+  width: 100%;
+}
+
+@media (max-width: 1080px) {
+  .admin-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .admin-list-row,
+  .service-admin-main,
+  .inline-actions,
+  .client-history,
+  .admin-user-chip {
+    display: grid;
+  }
+
+  .inline-actions,
+  .client-history {
+    grid-template-columns: 1fr;
+  }
 }

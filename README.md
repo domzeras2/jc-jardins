@@ -72,11 +72,40 @@ O schema esta em [supabase/schema.sql](C:\Users\gabri\Documents\New project\supa
   - price_snapshot
   - created_at
 
+- `budgets`
+  - id
+  - client_id
+  - customer_name
+  - customer_phone
+  - customer_address
+  - notes
+  - status
+  - subtotal_amount
+  - total_amount
+  - created_at
+
+- `budget_items`
+  - id
+  - budget_id
+  - service_id
+  - service_name_snapshot
+  - price_snapshot
+  - created_at
+
+- `admin_users`
+  - id
+  - user_id
+  - email
+  - full_name
+  - created_at
+
 ### Relacao entre tabelas
 
 - um `client` pode ter varios `orders`
 - um `order` pode ter varios `order_items`
 - cada `order_item` aponta para um `service`
+- um `client` pode ter varios `budgets`
+- um `budget` pode ter varios `budget_items`
 
 Isso deixa o sistema pronto para pedidos com varios servicos e facilita manutencao futura.
 
@@ -296,3 +325,59 @@ Se voce quer o caminho mais simples para colocar online:
 6. Importe na Vercel
 7. Cadastre as mesmas variaveis de ambiente
 8. Publique
+
+## Painel administrativo completo
+
+O painel agora foi estruturado com quatro areas internas:
+
+- `Dashboard`
+- `Pedidos`
+- `Servicos`
+- `Clientes`
+
+### Recursos do painel
+
+- login com `Supabase Auth`
+- validacao extra pela tabela `admin_users`
+- listagem de pedidos com troca de status
+- cadastro, edicao e remocao de servicos
+- listagem de clientes com historico basico de pedidos
+
+### Tabela adicional necessaria
+
+- `admin_users`
+  - id
+  - user_id
+  - email
+  - full_name
+  - created_at
+
+### Como criar o primeiro usuario admin
+
+1. Abra `Authentication > Users` no Supabase.
+2. Crie o usuario com e-mail e senha.
+3. Copie o `UUID` desse usuario.
+4. Abra o `SQL Editor`.
+5. Rode este SQL trocando os valores:
+
+```sql
+insert into public.admin_users (user_id, email, full_name)
+values (
+  'UUID_DO_USUARIO_AUTH',
+  'admin@jcjardins.com',
+  'Administrador JC Jardins'
+);
+```
+
+Depois disso, esse usuario ja pode fazer login no painel.
+
+### Seguranca aplicada
+
+As politicas do arquivo [supabase/schema.sql](C:\Users\gabri\Documents\New project\supabase\schema.sql) agora usam a funcao `public.is_admin()`.
+
+Na pratica:
+
+- usuarios publicos podem ver apenas servicos ativos
+- usuarios autenticados comuns nao entram no painel se nao estiverem em `admin_users`
+- somente admins podem ler clientes, pedidos e itens de pedido
+- somente admins podem criar, editar e remover servicos

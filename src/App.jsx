@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { hasSupabaseEnv, supabase } from "./lib/supabase";
 
@@ -10,7 +11,9 @@ const fallbackServices = [
     name: "Corte de grama",
     description: "Corte uniforme, acabamento e organizacao do gramado.",
     base_price: 160,
-    icon: "grass"
+    icon: "grass",
+    sort_order: 1,
+    is_active: true
   },
   {
     id: "fallback-limpeza",
@@ -18,7 +21,9 @@ const fallbackServices = [
     name: "Limpeza de terreno",
     description: "Remocao de mato, folhas, galhos e limpeza geral do terreno.",
     base_price: 220,
-    icon: "terrain"
+    icon: "terrain",
+    sort_order: 2,
+    is_active: true
   },
   {
     id: "fallback-poda",
@@ -26,7 +31,9 @@ const fallbackServices = [
     name: "Poda de arvores",
     description: "Poda cuidadosa para melhorar seguranca, visual e saude das plantas.",
     base_price: 280,
-    icon: "shears"
+    icon: "shears",
+    sort_order: 3,
+    is_active: true
   },
   {
     id: "fallback-manutencao",
@@ -34,7 +41,9 @@ const fallbackServices = [
     name: "Manutencao de jardim",
     description: "Manutencao periodica com capricho para manter o jardim sempre bonito.",
     base_price: 190,
-    icon: "leaf"
+    icon: "leaf",
+    sort_order: 4,
+    is_active: true
   }
 ];
 
@@ -45,22 +54,61 @@ const initialForm = {
   notes: ""
 };
 
+const initialServiceForm = {
+  id: "",
+  name: "",
+  description: "",
+  base_price: "",
+  icon: "leaf",
+  sort_order: "",
+  is_active: true
+};
+
+const initialBudgetForm = {
+  name: "",
+  phone: "",
+  address: "",
+  notes: "",
+  manualTotal: ""
+};
+
+const publicSections = [{ id: "home", label: "Inicio" }];
+
+const adminSections = [
+  { id: "dashboard", label: "Dashboard" },
+  { id: "orders", label: "Pedidos" },
+  { id: "budgets", label: "Orcamentos" },
+  { id: "services", label: "Servicos" },
+  { id: "clients", label: "Clientes" }
+];
+
 export default function App() {
   const [activeSection, setActiveSection] = useState("home");
   const [services, setServices] = useState(fallbackServices);
+  const [adminServices, setAdminServices] = useState([]);
   const [clients, setClients] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [budgets, setBudgets] = useState([]);
   const [form, setForm] = useState(initialForm);
   const [selectedServices, setSelectedServices] = useState([]);
   const [submitState, setSubmitState] = useState({ type: "", message: "" });
   const [loadingServices, setLoadingServices] = useState(true);
   const [loadingAdmin, setLoadingAdmin] = useState(false);
   const [adminSession, setAdminSession] = useState(null);
+  const [adminProfile, setAdminProfile] = useState(null);
+  const [checkingAdmin, setCheckingAdmin] = useState(false);
   const [authForm, setAuthForm] = useState({ email: "", password: "" });
   const [authState, setAuthState] = useState({ type: "", message: "" });
+  const [serviceForm, setServiceForm] = useState(initialServiceForm);
+  const [serviceState, setServiceState] = useState({ type: "", message: "" });
+  const [savingService, setSavingService] = useState(false);
+  const [budgetForm, setBudgetForm] = useState(initialBudgetForm);
+  const [selectedBudgetServices, setSelectedBudgetServices] = useState([]);
+  const [budgetState, setBudgetState] = useState({ type: "", message: "" });
+  const [savingBudget, setSavingBudget] = useState(false);
 
   useEffect(() => {
-    loadServices();
+    loadPublicServices();
   }, []);
 
   useEffect(() => {
@@ -90,12 +138,17 @@ export default function App() {
 
   useEffect(() => {
     if (!adminSession || !hasSupabaseEnv) {
+      setAdminProfile(null);
       setClients([]);
       setOrders([]);
+      setBudgets([]);
+      setAdminServices([]);
+      setCheckingAdmin(false);
+      setLoadingAdmin(false);
       return;
     }
 
-    loadAdminData();
+    verifyAdminAccess(adminSession);
   }, [adminSession]);
 
   const selectedServiceObjects = services.filter((service) =>
@@ -107,6 +160,18 @@ export default function App() {
     0
   );
 
+  const selectedBudgetServiceObjects = adminServices.filter((service) =>
+    selectedBudgetServices.includes(service.id)
+  );
+
+  const budgetSubtotal = selectedBudgetServiceObjects.reduce(
+    (sum, item) => sum + Number(item.base_price || 0),
+    0
+  );
+
+  const budgetFinalTotal =
+    budgetForm.manualTotal !== "" ? Number(budgetForm.manualTotal || 0) : budgetSubtotal;
+
   const whatsappHref = buildWhatsAppHref({
     name: form.name,
     phone: form.phone,
@@ -115,7 +180,27 @@ export default function App() {
     services: selectedServiceObjects
   });
 
-  async function loadServices() {
+  const totalRevenue = orders.reduce(
+    (sum, order) => sum + Number(order.total_amount || 0),
+    0
+  );
+
+  const budgetWhatsappHref = buildBudgetWhatsAppHref({
+    name: budgetForm.name,
+    phone: budgetForm.phone,
+    address: budgetForm.address,
+    notes: budgetForm.notes,
+    services: selectedBudgetServiceObjects,
+    totalAmount: budgetFinalTotal
+  });
+
+  const pendingOrders = orders.filter((item) => item.status === "pendente").length;
+  const inProgressOrders = orders.filter(
+    (item) => item.status === "em andamento"
+  ).length;
+  const completedOrders = orders.filter((item) => item.status === "concluido").length;
+
+  async function loadPublicServices() {
     if (!hasSupabaseEnv) {
       setLoadingServices(false);
       return;
@@ -125,7 +210,8 @@ export default function App() {
       .from("services")
       .select("*")
       .eq("is_active", true)
-      .order("sort_order", { ascending: true });
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
 
     if (!error && data?.length) {
       setServices(data);
@@ -134,18 +220,67 @@ export default function App() {
     setLoadingServices(false);
   }
 
+  async function verifyAdminAccess(session) {
+    setCheckingAdmin(true);
+    setAuthState({ type: "", message: "" });
+
+    const { data, error } = await supabase
+      .from("admin_users")
+      .select("id, email, full_name")
+      .eq("user_id", session.user.id)
+      .maybeSingle();
+
+    if (error || !data) {
+      setAdminProfile(null);
+      setCheckingAdmin(false);
+      await supabase.auth.signOut();
+      setAuthState({
+        type: "error",
+        message:
+          "Este usuario nao esta autorizado no painel. Cadastre-o na tabela admin_users."
+      });
+      return;
+    }
+
+    setAdminProfile(data);
+    setCheckingAdmin(false);
+    await loadAdminData();
+  }
+
   async function loadAdminData() {
+    if (!supabase) return;
+
     setLoadingAdmin(true);
 
-    const [clientsResponse, ordersResponse] = await Promise.all([
-      supabase.from("clients").select("*").order("created_at", { ascending: false }),
+    const [servicesResponse, clientsResponse, ordersResponse, budgetsResponse] = await Promise.all([
+      supabase
+        .from("services")
+        .select("*")
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("clients")
+        .select(
+          "id, name, phone, address, created_at, orders(id, status, requested_at, total_amount)"
+        )
+        .order("created_at", { ascending: false }),
       supabase
         .from("orders")
         .select(
           "id, status, notes, source, total_amount, requested_at, client:clients!orders_client_id_fkey(id, name, phone, address), order_items(id, service_name_snapshot, price_snapshot)"
         )
-        .order("requested_at", { ascending: false })
+        .order("requested_at", { ascending: false }),
+      supabase
+        .from("budgets")
+        .select(
+          "id, customer_name, customer_phone, customer_address, notes, status, subtotal_amount, total_amount, created_at, budget_items(id, service_name_snapshot, price_snapshot)"
+        )
+        .order("created_at", { ascending: false })
     ]);
+
+    if (!servicesResponse.error) {
+      setAdminServices(servicesResponse.data || []);
+    }
 
     if (!clientsResponse.error) {
       setClients(clientsResponse.data || []);
@@ -153,6 +288,10 @@ export default function App() {
 
     if (!ordersResponse.error) {
       setOrders(ordersResponse.data || []);
+    }
+
+    if (!budgetsResponse.error) {
+      setBudgets(budgetsResponse.data || []);
     }
 
     setLoadingAdmin(false);
@@ -172,8 +311,7 @@ export default function App() {
     if (!hasSupabaseEnv || !supabase) {
       setSubmitState({
         type: "error",
-        message:
-          "Configure as variaveis do Supabase antes de usar em producao."
+        message: "Configure as variaveis do Supabase antes de usar em producao."
       });
       return;
     }
@@ -203,8 +341,8 @@ export default function App() {
     setForm(initialForm);
     setSelectedServices([]);
 
-    if (adminSession) {
-      loadAdminData();
+    if (adminProfile) {
+      await loadAdminData();
     }
   }
 
@@ -221,7 +359,7 @@ export default function App() {
 
     setAuthState({ type: "loading", message: "Entrando..." });
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: authForm.email.trim(),
       password: authForm.password
     });
@@ -234,7 +372,23 @@ export default function App() {
       return;
     }
 
+    const { data: adminRow, error: adminError } = await supabase
+      .from("admin_users")
+      .select("id")
+      .eq("user_id", data.user.id)
+      .maybeSingle();
+
+    if (adminError || !adminRow) {
+      await supabase.auth.signOut();
+      setAuthState({
+        type: "error",
+        message: "Login feito, mas este usuario nao tem permissao de admin."
+      });
+      return;
+    }
+
     setAuthState({ type: "success", message: "Login realizado." });
+    setAuthForm({ email: "", password: "" });
   }
 
   async function handleLogout() {
@@ -252,13 +406,243 @@ export default function App() {
       .eq("id", orderId);
 
     if (!error) {
-      loadAdminData();
+      await loadAdminData();
     }
+  }
+
+  async function saveServiceData() {
+    if (!supabase) return;
+
+    setSavingService(true);
+    setServiceState({ type: "loading", message: "Salvando servico..." });
+
+    const payload = {
+      name: serviceForm.name.trim(),
+      slug: buildSlug(serviceForm.name),
+      description: serviceForm.description.trim(),
+      base_price: Number(serviceForm.base_price || 0),
+      icon: serviceForm.icon,
+      sort_order: Number(serviceForm.sort_order || 0),
+      is_active: Boolean(serviceForm.is_active)
+    };
+
+    const query = serviceForm.id
+      ? supabase.from("services").update(payload).eq("id", serviceForm.id)
+      : supabase.from("services").insert(payload);
+
+    const { error } = await query;
+
+    if (error) {
+      setServiceState({
+        type: "error",
+        message:
+          "Nao foi possivel salvar o servico. Verifique slug, permissoes ou dados duplicados."
+      });
+      setSavingService(false);
+      return false;
+    }
+
+    setServiceState({
+      type: "success",
+      message: serviceForm.id
+        ? "Servico atualizado com sucesso."
+        : "Servico criado com sucesso."
+    });
+    setServiceForm(initialServiceForm);
+    await Promise.all([loadAdminData(), loadPublicServices()]);
+    setSavingService(false);
+    return true;
+  }
+
+  async function handleServiceSubmit(event) {
+    event.preventDefault();
+    await saveServiceData();
+  }
+
+  async function handleDeleteService(service) {
+    if (!supabase) return;
+
+    const confirmed = window.confirm(
+      `Remover o servico "${service.name}" do painel?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const { error } = await supabase.from("services").delete().eq("id", service.id);
+
+    if (error) {
+      setServiceState({
+        type: "error",
+        message:
+          "Nao foi possivel remover o servico. Confirme a politica de delete no Supabase."
+      });
+      return;
+    }
+
+    setServiceState({
+      type: "success",
+      message: "Servico removido com sucesso."
+    });
+
+    if (serviceForm.id === service.id) {
+      setServiceForm(initialServiceForm);
+    }
+
+    await Promise.all([loadAdminData(), loadPublicServices()]);
+  }
+
+  async function handleBudgetSubmit(event) {
+    event.preventDefault();
+
+    if (!supabase) return;
+
+    if (!selectedBudgetServiceObjects.length) {
+      setBudgetState({
+        type: "error",
+        message: "Selecione pelo menos um servico para criar o orcamento."
+      });
+      return;
+    }
+
+    setSavingBudget(true);
+    setBudgetState({ type: "loading", message: "Salvando orcamento..." });
+
+    const { data: clientData, error: clientError } = await supabase
+      .from("clients")
+      .upsert(
+        {
+          name: budgetForm.name.trim(),
+          phone: budgetForm.phone.trim(),
+          address: budgetForm.address.trim()
+        },
+        { onConflict: "phone" }
+      )
+      .select("id")
+      .single();
+
+    if (clientError) {
+      setBudgetState({
+        type: "error",
+        message: "Nao foi possivel salvar os dados do cliente do orcamento."
+      });
+      setSavingBudget(false);
+      return;
+    }
+
+    const budgetPayload = {
+      client_id: clientData?.id ?? null,
+      customer_name: budgetForm.name.trim(),
+      customer_phone: budgetForm.phone.trim(),
+      customer_address: budgetForm.address.trim(),
+      notes: budgetForm.notes.trim(),
+      status: "pendente",
+      subtotal_amount: budgetSubtotal,
+      total_amount: budgetFinalTotal
+    };
+
+    const { data: budgetRecord, error: budgetError } = await supabase
+      .from("budgets")
+      .insert(budgetPayload)
+      .select("id")
+      .single();
+
+    if (budgetError || !budgetRecord) {
+      setBudgetState({
+        type: "error",
+        message: "Nao foi possivel salvar o orcamento no Supabase."
+      });
+      setSavingBudget(false);
+      return;
+    }
+
+    const budgetItemsPayload = selectedBudgetServiceObjects.map((service) => ({
+      budget_id: budgetRecord.id,
+      service_id: service.id,
+      service_name_snapshot: service.name,
+      price_snapshot: Number(service.base_price || 0)
+    }));
+
+    const { error: itemsError } = await supabase
+      .from("budget_items")
+      .insert(budgetItemsPayload);
+
+    if (itemsError) {
+      await supabase.from("budgets").delete().eq("id", budgetRecord.id);
+      setBudgetState({
+        type: "error",
+        message: "Nao foi possivel salvar os itens do orcamento."
+      });
+      setSavingBudget(false);
+      return;
+    }
+
+    setBudgetState({
+      type: "success",
+      message: "Orcamento criado com sucesso."
+    });
+    setBudgetForm(initialBudgetForm);
+    setSelectedBudgetServices([]);
+    await loadAdminData();
+    setSavingBudget(false);
+  }
+
+  async function handleBudgetStatusChange(budgetId, nextStatus) {
+    if (!supabase) return;
+
+    const { error } = await supabase
+      .from("budgets")
+      .update({ status: nextStatus })
+      .eq("id", budgetId);
+
+    if (!error) {
+      await loadAdminData();
+    }
+  }
+
+  async function handleDeleteBudget(budgetId) {
+    if (!supabase) return;
+
+    const confirmed = window.confirm("Excluir este orcamento?");
+
+    if (!confirmed) {
+      return;
+    }
+
+    const { error } = await supabase.from("budgets").delete().eq("id", budgetId);
+
+    if (error) {
+      setBudgetState({
+        type: "error",
+        message: "Nao foi possivel excluir o orcamento."
+      });
+      return;
+    }
+
+    setBudgetState({
+      type: "success",
+      message: "Orcamento removido com sucesso."
+    });
+    await loadAdminData();
   }
 
   function handleFormChange(event) {
     const { name, value } = event.target;
     setForm((current) => ({ ...current, [name]: value }));
+  }
+
+  function handleServiceFormChange(event) {
+    const { name, value, type, checked } = event.target;
+    setServiceForm((current) => ({
+      ...current,
+      [name]: type === "checkbox" ? checked : value
+    }));
+  }
+
+  function handleBudgetFormChange(event) {
+    const { name, value } = event.target;
+    setBudgetForm((current) => ({ ...current, [name]: value }));
   }
 
   function toggleService(serviceId) {
@@ -267,6 +651,39 @@ export default function App() {
         ? current.filter((item) => item !== serviceId)
         : [...current, serviceId]
     );
+  }
+
+  function toggleBudgetService(serviceId) {
+    setSelectedBudgetServices((current) =>
+      current.includes(serviceId)
+        ? current.filter((item) => item !== serviceId)
+        : [...current, serviceId]
+    );
+  }
+
+  function openServiceEditor(service) {
+    setServiceForm({
+      id: service.id,
+      name: service.name,
+      description: service.description,
+      base_price: String(service.base_price ?? ""),
+      icon: service.icon || "leaf",
+      sort_order: String(service.sort_order ?? 0),
+      is_active: Boolean(service.is_active)
+    });
+    setServiceState({ type: "", message: "" });
+    setActiveSection("services");
+  }
+
+  function resetServiceForm() {
+    setServiceForm(initialServiceForm);
+    setServiceState({ type: "", message: "" });
+  }
+
+  function resetBudgetForm() {
+    setBudgetForm(initialBudgetForm);
+    setSelectedBudgetServices([]);
+    setBudgetState({ type: "", message: "" });
   }
 
   function seedLocalPreview() {
@@ -305,35 +722,46 @@ export default function App() {
           </div>
 
           <nav className="sidebar-nav">
-            {[
-              ["home", "Inicio"],
-              ["clients", "Clientes"],
-              ["orders", "Painel"],
-              ["invoices", "Notas"]
-            ].map(([section, label]) => (
+            {publicSections.map((section) => (
               <button
-                key={section}
-                className={`nav-link ${activeSection === section ? "active" : ""}`}
-                onClick={() => setActiveSection(section)}
+                key={section.id}
+                className={`nav-link ${activeSection === section.id ? "active" : ""}`}
+                onClick={() => setActiveSection(section.id)}
                 type="button"
               >
-                {label}
+                {section.label}
+              </button>
+            ))}
+          </nav>
+
+          <div className="sidebar-divider">
+            <span>Painel administrativo</span>
+          </div>
+
+          <nav className="sidebar-nav">
+            {adminSections.map((section) => (
+              <button
+                key={section.id}
+                className={`nav-link ${activeSection === section.id ? "active" : ""}`}
+                onClick={() => setActiveSection(section.id)}
+                type="button"
+              >
+                {section.label}
               </button>
             ))}
           </nav>
 
           <div className="sidebar-card">
-            <p className="eyebrow">Especialidade</p>
-            <h3>Jardinagem com capricho e presenca profissional</h3>
+            <p className="eyebrow">Operacao</p>
+            <h3>Site publico na frente e painel protegido por login no mesmo projeto</h3>
             <p>
-              Um jeito simples de contratar varios servicos no mesmo pedido,
-              com estrutura pronta para crescer online.
+              O cliente solicita online, o pedido entra no painel e voce gerencia
+              servicos, clientes e andamento sem mexer no codigo.
             </p>
           </div>
         </aside>
 
         <main className="main-content">
-
           {activeSection === "home" && (
             <section className="section-panel active">
               <article className="hero-card">
@@ -380,8 +808,12 @@ export default function App() {
                   </div>
 
                   <div className="hero-badges">
-                    <span className="hero-badge">Atendimento em Curitiba e regiao metropolitana</span>
-                    <span className="hero-badge">Varios servicos no mesmo pedido</span>
+                    <span className="hero-badge">
+                      Atendimento em Curitiba e regiao metropolitana
+                    </span>
+                    <span className="hero-badge">
+                      Varios servicos no mesmo pedido
+                    </span>
                   </div>
                 </div>
 
@@ -419,46 +851,57 @@ export default function App() {
                   <p className="eyebrow">Servicos</p>
                   <h3>Escolha um ou varios servicos</h3>
                 </div>
+                {!hasSupabaseEnv && (
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    onClick={seedLocalPreview}
+                  >
+                    Preencher exemplo
+                  </button>
+                )}
               </section>
 
               <div className="service-catalog">
                 {loadingServices ? (
                   <div className="panel-card">Carregando servicos...</div>
                 ) : (
-                  services.map((service) => (
-                    <article
-                      className={`service-card ${
-                        selectedServices.includes(service.id) ? "selected" : ""
-                      }`}
-                      key={service.id}
-                    >
-                      <div className="service-card-top">
-                        <div
-                          className="service-icon"
-                          dangerouslySetInnerHTML={{ __html: iconMarkup(service.icon) }}
-                        />
-                        <span className="service-type-pill">Jardinagem</span>
-                      </div>
-                      <div>
-                        <h4 className="service-name">{service.name}</h4>
-                        <p className="muted">{service.description}</p>
-                      </div>
-                      <div className="service-footer">
-                        <span className="price-pill">
-                          {formatCurrency(service.base_price)}
-                        </span>
-                        <button
-                          className={`secondary-button service-add-button ${
-                            selectedServices.includes(service.id) ? "is-selected" : ""
-                          }`}
-                          type="button"
-                          onClick={() => toggleService(service.id)}
-                        >
-                          {selectedServices.includes(service.id) ? "✔ Selecionado" : "Adicionar"}
-                        </button>
-                      </div>
-                    </article>
-                  ))
+                  services.map((service) => {
+                    const selected = selectedServices.includes(service.id);
+
+                    return (
+                      <article
+                        className={`service-card ${selected ? "selected" : ""}`}
+                        key={service.id}
+                      >
+                        <div className="service-card-top">
+                          <div
+                            className="service-icon"
+                            dangerouslySetInnerHTML={{ __html: iconMarkup(service.icon) }}
+                          />
+                          <span className="service-type-pill">Jardinagem</span>
+                        </div>
+                        <div>
+                          <h4 className="service-name">{service.name}</h4>
+                          <p className="muted">{service.description}</p>
+                        </div>
+                        <div className="service-footer">
+                          <span className="price-pill">
+                            {formatCurrency(service.base_price)}
+                          </span>
+                          <button
+                            className={`secondary-button service-add-button ${
+                              selected ? "is-selected" : ""
+                            }`}
+                            type="button"
+                            onClick={() => toggleService(service.id)}
+                          >
+                            {selected ? "Selecionado" : "Adicionar"}
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })
                 )}
               </div>
 
@@ -667,42 +1110,118 @@ export default function App() {
             </section>
           )}
 
-          {activeSection === "clients" && (
+          {activeSection === "dashboard" && (
             <section className="section-panel active">
               <AdminGate
                 session={adminSession}
+                adminProfile={adminProfile}
                 authForm={authForm}
                 authState={authState}
+                checkingAdmin={checkingAdmin}
                 setAuthForm={setAuthForm}
                 onSubmit={handleAdminLogin}
                 onLogout={handleLogout}
               >
                 <div className="section-heading">
                   <div>
-                    <p className="eyebrow">Clientes</p>
-                    <h3>Clientes cadastrados</h3>
+                    <p className="eyebrow">Dashboard</p>
+                    <h3>Visao geral da operacao</h3>
                   </div>
                 </div>
 
                 {loadingAdmin ? (
-                  <div className="panel-card">Carregando clientes...</div>
+                  <div className="panel-card">Carregando painel...</div>
                 ) : (
-                  <div className="cards-grid">
-                    {clients.length ? (
-                      clients.map((client) => (
-                        <article className="mini-card" key={client.id}>
-                          <div className="mini-card-top">
-                            <h4>{client.name}</h4>
-                            <span className="tag">Cliente</span>
+                  <>
+                    <div className="stats-grid">
+                      <article className="stat-card">
+                        <span>Pedidos pendentes</span>
+                        <strong>{pendingOrders}</strong>
+                        <small>aguardando atendimento</small>
+                      </article>
+                      <article className="stat-card">
+                        <span>Em andamento</span>
+                        <strong>{inProgressOrders}</strong>
+                        <small>servicos em execucao</small>
+                      </article>
+                      <article className="stat-card accent">
+                        <span>Concluidos</span>
+                        <strong>{completedOrders}</strong>
+                        <small>pedidos finalizados</small>
+                      </article>
+                      <article className="stat-card">
+                        <span>Faturamento bruto</span>
+                        <strong>{formatCurrency(totalRevenue)}</strong>
+                        <small>baseado nos pedidos salvos</small>
+                      </article>
+                    </div>
+
+                    <div className="admin-grid">
+                      <article className="panel-card">
+                        <div className="panel-header">
+                          <div>
+                            <p className="eyebrow">Pedidos recentes</p>
+                            <h3>Ultimas solicitacoes</h3>
                           </div>
-                          <p className="muted">{client.phone}</p>
-                          <p className="muted">{client.address}</p>
-                        </article>
-                      ))
-                    ) : (
-                      <div className="panel-card">Nenhum cliente encontrado.</div>
-                    )}
-                  </div>
+                          <button
+                            className="secondary-button"
+                            type="button"
+                            onClick={() => setActiveSection("orders")}
+                          >
+                            Ver pedidos
+                          </button>
+                        </div>
+
+                        <div className="list-stack compact-list">
+                          {orders.slice(0, 4).map((order) => (
+                            <article className="admin-list-row" key={order.id}>
+                              <div>
+                                <strong>{order.client?.name || "Cliente"}</strong>
+                                <p className="muted">
+                                  {formatDate(order.requested_at)} |{" "}
+                                  {(order.order_items || [])
+                                    .map((item) => item.service_name_snapshot)
+                                    .join(", ")}
+                                </p>
+                              </div>
+                              <span className={`status-chip ${statusClass(order.status)}`}>
+                                {formatStatusLabel(order.status)}
+                              </span>
+                            </article>
+                          ))}
+                          {!orders.length && (
+                            <div className="empty-state-card">
+                              Nenhum pedido recebido ainda.
+                            </div>
+                          )}
+                        </div>
+                      </article>
+
+                      <article className="panel-card">
+                        <div className="panel-header">
+                          <div>
+                            <p className="eyebrow">Base cadastrada</p>
+                            <h3>Resumo rapido</h3>
+                          </div>
+                        </div>
+
+                        <div className="highlight-points">
+                          <div className="highlight-item">
+                            <strong>{clients.length} clientes</strong>
+                            <span>cadastros salvos no banco</span>
+                          </div>
+                          <div className="highlight-item">
+                            <strong>{adminServices.length} servicos</strong>
+                            <span>catalogo configurado no painel</span>
+                          </div>
+                          <div className="highlight-item">
+                            <strong>{adminServices.filter((item) => item.is_active).length} ativos</strong>
+                            <span>visiveis para o cliente no site</span>
+                          </div>
+                        </div>
+                      </article>
+                    </div>
+                  </>
                 )}
               </AdminGate>
             </section>
@@ -712,44 +1231,19 @@ export default function App() {
             <section className="section-panel active">
               <AdminGate
                 session={adminSession}
+                adminProfile={adminProfile}
                 authForm={authForm}
                 authState={authState}
+                checkingAdmin={checkingAdmin}
                 setAuthForm={setAuthForm}
                 onSubmit={handleAdminLogin}
                 onLogout={handleLogout}
               >
                 <div className="section-heading">
                   <div>
-                    <p className="eyebrow">Painel</p>
+                    <p className="eyebrow">Pedidos</p>
                     <h3>Pedidos recebidos</h3>
                   </div>
-                </div>
-
-                <div className="stats-grid compact-stats">
-                  <article className="stat-card">
-                    <span>Clientes</span>
-                    <strong>{clients.length}</strong>
-                    <small>base cadastrada</small>
-                  </article>
-                  <article className="stat-card">
-                    <span>Servicos</span>
-                    <strong>{services.length}</strong>
-                    <small>catalogo ativo</small>
-                  </article>
-                  <article className="stat-card">
-                    <span>Ordens abertas</span>
-                    <strong>
-                      {orders.filter((item) => item.status !== "concluido").length}
-                    </strong>
-                    <small>pendentes ou em andamento</small>
-                  </article>
-                  <article className="stat-card accent">
-                    <span>Concluidos</span>
-                    <strong>
-                      {orders.filter((item) => item.status === "concluido").length}
-                    </strong>
-                    <small>servicos finalizados</small>
-                  </article>
                 </div>
 
                 {loadingAdmin ? (
@@ -763,7 +1257,7 @@ export default function App() {
                             <div>
                               <p className="eyebrow order-status-label">
                                 <span className={`status-chip ${statusClass(order.status)}`}>
-                                  {order.status}
+                                  {formatStatusLabel(order.status)}
                                 </span>
                               </p>
                               <h4>
@@ -771,8 +1265,8 @@ export default function App() {
                                 {order.client?.name || "Cliente"}
                               </h4>
                               <p className="muted">
-                                {formatDate(order.requested_at)} |{" "}
-                                {order.client?.phone || "Sem telefone"}
+                                {order.client?.phone || "Sem telefone"} |{" "}
+                                {formatDate(order.requested_at)}
                               </p>
                               <p className="muted">{order.client?.address}</p>
                               <p className="muted">
@@ -811,31 +1305,596 @@ export default function App() {
             </section>
           )}
 
-          {activeSection === "invoices" && (
+          {activeSection === "services" && (
             <section className="section-panel active">
-              <div className="section-heading">
-                <div>
-                  <p className="eyebrow">Fiscal</p>
-                  <h3>Preparado para emissao futura</h3>
+              <AdminGate
+                session={adminSession}
+                adminProfile={adminProfile}
+                authForm={authForm}
+                authState={authState}
+                checkingAdmin={checkingAdmin}
+                setAuthForm={setAuthForm}
+                onSubmit={handleAdminLogin}
+                onLogout={handleLogout}
+              >
+                <div className="section-heading">
+                  <div>
+                    <p className="eyebrow">Servicos</p>
+                    <h3>Gerencie o catalogo</h3>
+                  </div>
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    onClick={resetServiceForm}
+                  >
+                    Novo servico
+                  </button>
                 </div>
-              </div>
 
-              <div className="panel-card">
-                <p>
-                  Esta base ja salva clientes, pedidos e servicos escolhidos em
-                  tabelas separadas. Isso deixa o projeto pronto para acoplar
-                  emissao de nota fiscal ou um modulo financeiro depois, sem
-                  refazer a estrutura do sistema.
-                </p>
-              </div>
+                <div className="admin-grid">
+                  <article className="panel-card">
+                    <div className="panel-header">
+                      <div>
+                        <p className="eyebrow">
+                          {serviceForm.id ? "Edicao" : "Cadastro"}
+                        </p>
+                        <h3>
+                          {serviceForm.id ? "Editar servico" : "Adicionar servico"}
+                        </h3>
+                      </div>
+                    </div>
+
+                    <form className="request-form" onSubmit={handleServiceSubmit}>
+                      <div className="form-grid">
+                        <label className="full-span">
+                          Nome do servico
+                          <input
+                            name="name"
+                            value={serviceForm.name}
+                            onChange={handleServiceFormChange}
+                            placeholder="Ex: Plantio e revitalizacao"
+                            required
+                          />
+                        </label>
+                        <label className="full-span">
+                          Descricao
+                          <textarea
+                            name="description"
+                            value={serviceForm.description}
+                            onChange={handleServiceFormChange}
+                            rows={4}
+                            placeholder="Descreva rapidamente o que esta incluso"
+                            required
+                          />
+                        </label>
+                        <label>
+                          Preco base
+                          <input
+                            name="base_price"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={serviceForm.base_price}
+                            onChange={handleServiceFormChange}
+                            placeholder="0,00"
+                            required
+                          />
+                        </label>
+                        <label>
+                          Ordem
+                          <input
+                            name="sort_order"
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={serviceForm.sort_order}
+                            onChange={handleServiceFormChange}
+                            placeholder="0"
+                          />
+                        </label>
+                        <label>
+                          Icone
+                          <select
+                            name="icon"
+                            value={serviceForm.icon}
+                            onChange={handleServiceFormChange}
+                          >
+                            <option value="leaf">Folha</option>
+                            <option value="grass">Grama</option>
+                            <option value="terrain">Terreno</option>
+                            <option value="shears">Tesoura</option>
+                          </select>
+                        </label>
+                        <label className="inline-toggle">
+                          <span>Ativo no site</span>
+                          <input
+                            name="is_active"
+                            type="checkbox"
+                            checked={serviceForm.is_active}
+                            onChange={handleServiceFormChange}
+                          />
+                        </label>
+                      </div>
+
+                      {serviceState.message && (
+                        <p className={`feedback ${serviceState.type}`}>
+                          {serviceState.message}
+                        </p>
+                      )}
+
+                      <div className="request-actions">
+                        <button className="primary-button" type="submit" disabled={savingService}>
+                          {serviceForm.id ? "Salvar alteracoes" : "Criar servico"}
+                        </button>
+                        {serviceForm.id && (
+                          <button
+                            className="secondary-button"
+                            type="button"
+                            onClick={resetServiceForm}
+                          >
+                            Cancelar edicao
+                          </button>
+                        )}
+                      </div>
+                    </form>
+                  </article>
+
+                  <article className="panel-card">
+                    <div className="panel-header">
+                      <div>
+                        <p className="eyebrow">Catalogo</p>
+                        <h3>Servicos cadastrados</h3>
+                      </div>
+                    </div>
+
+                    <div className="list-stack compact-list">
+                      {loadingAdmin ? (
+                        <div className="empty-state-card">Carregando servicos...</div>
+                      ) : adminServices.length ? (
+                        adminServices.map((service) => (
+                          <article className="admin-list-row service-admin-row" key={service.id}>
+                            <div className="service-admin-main">
+                              <div
+                                className="service-icon"
+                                dangerouslySetInnerHTML={{ __html: iconMarkup(service.icon) }}
+                              />
+                              <div>
+                                <strong>{service.name}</strong>
+                                <p className="muted">{service.description}</p>
+                                <div className="order-service-list">
+                                  <span className="order-service-chip">
+                                    {formatCurrency(service.base_price)}
+                                  </span>
+                                  <span className="order-service-chip">
+                                    {service.is_active ? "Ativo" : "Oculto"}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="inline-actions">
+                              {serviceForm.id === service.id ? (
+                                <>
+                                  <button
+                                    className="secondary-button success-button"
+                                    type="button"
+                                    onClick={saveServiceData}
+                                    disabled={savingService}
+                                  >
+                                    Salvar
+                                  </button>
+                                  <button
+                                    className="secondary-button"
+                                    type="button"
+                                    onClick={resetServiceForm}
+                                  >
+                                    Cancelar edicao
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    className="secondary-button"
+                                    type="button"
+                                    onClick={() => openServiceEditor(service)}
+                                  >
+                                    Editar
+                                  </button>
+                                  <button
+                                    className="secondary-button danger-button"
+                                    type="button"
+                                    onClick={() => handleDeleteService(service)}
+                                  >
+                                    Excluir
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </article>
+                        ))
+                      ) : (
+                        <div className="empty-state-card">
+                          Nenhum servico cadastrado ainda.
+                        </div>
+                      )}
+                    </div>
+                  </article>
+                </div>
+              </AdminGate>
+            </section>
+          )}
+
+          {activeSection === "budgets" && (
+            <section className="section-panel active">
+              <AdminGate
+                session={adminSession}
+                adminProfile={adminProfile}
+                authForm={authForm}
+                authState={authState}
+                checkingAdmin={checkingAdmin}
+                setAuthForm={setAuthForm}
+                onSubmit={handleAdminLogin}
+                onLogout={handleLogout}
+              >
+                <div className="section-heading">
+                  <div>
+                    <p className="eyebrow">Orcamentos</p>
+                    <h3>Monte e envie orcamentos</h3>
+                  </div>
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    onClick={resetBudgetForm}
+                  >
+                    Novo orcamento
+                  </button>
+                </div>
+
+                <div className="admin-grid">
+                  <article className="panel-card">
+                    <div className="panel-header">
+                      <div>
+                        <p className="eyebrow">Criacao manual</p>
+                        <h3>Gerar orcamento</h3>
+                      </div>
+                    </div>
+
+                    <form className="request-form" onSubmit={handleBudgetSubmit}>
+                      <div className="form-grid">
+                        <label>
+                          Nome do cliente
+                          <input
+                            name="name"
+                            value={budgetForm.name}
+                            onChange={handleBudgetFormChange}
+                            placeholder="Nome do cliente"
+                            required
+                          />
+                        </label>
+                        <label>
+                          Telefone
+                          <input
+                            name="phone"
+                            value={budgetForm.phone}
+                            onChange={handleBudgetFormChange}
+                            placeholder="(41) 99999-9999"
+                            required
+                          />
+                        </label>
+                        <label className="full-span">
+                          Endereco
+                          <input
+                            name="address"
+                            value={budgetForm.address}
+                            onChange={handleBudgetFormChange}
+                            placeholder="Rua, numero e bairro"
+                            required
+                          />
+                        </label>
+                        <label className="full-span">
+                          Observacoes
+                          <textarea
+                            name="notes"
+                            value={budgetForm.notes}
+                            onChange={handleBudgetFormChange}
+                            rows={4}
+                            placeholder="Informacoes adicionais para o cliente"
+                          />
+                        </label>
+                      </div>
+
+                      <div className="multi-service-header">
+                        <div>
+                          <p className="eyebrow">Servicos do orcamento</p>
+                          <h4>Selecione um ou varios servicos</h4>
+                        </div>
+                        <span className="selection-count">
+                          {selectedBudgetServiceObjects.length} selecionado(s)
+                        </span>
+                      </div>
+
+                      <div className="service-picker">
+                        {adminServices.map((service) => {
+                          const selected = selectedBudgetServices.includes(service.id);
+                          return (
+                            <label
+                              key={service.id}
+                              className={`picker-card ${selected ? "selected" : ""}`}
+                            >
+                              <input
+                                className="service-checkbox"
+                                type="checkbox"
+                                checked={selected}
+                                onChange={() => toggleBudgetService(service.id)}
+                              />
+                              <div className="picker-body">
+                                <div className="picker-top">
+                                  <div
+                                    className="service-icon"
+                                    dangerouslySetInnerHTML={{
+                                      __html: iconMarkup(service.icon)
+                                    }}
+                                  />
+                                  <span className="picker-state">
+                                    {selected ? "Selecionado" : "Selecionar"}
+                                  </span>
+                                </div>
+                                <div>
+                                  <h4 className="picker-title">{service.name}</h4>
+                                  <p className="muted">{service.description}</p>
+                                  <span className="price-pill inline-price-pill">
+                                    {formatCurrency(service.base_price)}
+                                  </span>
+                                </div>
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
+
+                      <article className="order-summary-card">
+                        <div className="panel-header">
+                          <div>
+                            <p className="eyebrow">Resumo do orcamento</p>
+                            <h4>Valor calculado automaticamente</h4>
+                          </div>
+                          <span className="price-pill">
+                            Subtotal {formatCurrency(budgetSubtotal)}
+                          </span>
+                        </div>
+
+                        <div className="summary-grid">
+                          <div className="full-span">
+                            <span className="summary-label">Servicos</span>
+                            <div
+                              className={`summary-services ${
+                                selectedBudgetServiceObjects.length ? "" : "empty-summary"
+                              }`}
+                            >
+                              {selectedBudgetServiceObjects.length ? (
+                                selectedBudgetServiceObjects.map((service) => (
+                                  <span className="summary-chip" key={service.id}>
+                                    {service.name}
+                                  </span>
+                                ))
+                              ) : (
+                                <span>Selecione os servicos que faram parte do orcamento.</span>
+                              )}
+                            </div>
+                          </div>
+                          <label>
+                            Valor final manual
+                            <input
+                              name="manualTotal"
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={budgetForm.manualTotal}
+                              onChange={handleBudgetFormChange}
+                              placeholder="Opcional"
+                            />
+                          </label>
+                          <div className="summary-total-box">
+                            <span className="summary-label">Total do orcamento</span>
+                            <strong>{formatCurrency(budgetFinalTotal)}</strong>
+                          </div>
+                        </div>
+                      </article>
+
+                      {budgetState.message && (
+                        <p className={`feedback ${budgetState.type}`}>
+                          {budgetState.message}
+                        </p>
+                      )}
+
+                      <div className="request-actions">
+                        <button className="primary-button" type="submit" disabled={savingBudget}>
+                          Criar orcamento
+                        </button>
+                        <a
+                          className={`whatsapp-panel-button ${
+                            selectedBudgetServiceObjects.length &&
+                            budgetForm.name &&
+                            budgetForm.phone &&
+                            budgetForm.address
+                              ? ""
+                              : "disabled-link"
+                          }`}
+                          href={budgetWhatsappHref}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-disabled={
+                            selectedBudgetServiceObjects.length &&
+                            budgetForm.name &&
+                            budgetForm.phone &&
+                            budgetForm.address
+                              ? "false"
+                              : "true"
+                          }
+                        >
+                          <WhatsAppIcon />
+                          <span>Enviar pelo WhatsApp</span>
+                        </a>
+                      </div>
+                    </form>
+                  </article>
+
+                  <article className="panel-card">
+                    <div className="panel-header">
+                      <div>
+                        <p className="eyebrow">Historico</p>
+                        <h3>Orcamentos criados</h3>
+                      </div>
+                    </div>
+
+                    <div className="list-stack compact-list">
+                      {loadingAdmin ? (
+                        <div className="empty-state-card">Carregando orcamentos...</div>
+                      ) : budgets.length ? (
+                        budgets.map((budget) => (
+                          <article className="admin-list-row budget-row" key={budget.id}>
+                            <div className="budget-main">
+                              <strong>{budget.customer_name}</strong>
+                              <p className="muted">
+                                {budget.customer_phone} | {budget.customer_address}
+                              </p>
+                              <p className="muted">
+                                {budget.notes || "Sem observacoes adicionais."}
+                              </p>
+                              <div className="order-service-list">
+                                {(budget.budget_items || []).map((item) => (
+                                  <span className="order-service-chip" key={item.id}>
+                                    {item.service_name_snapshot}
+                                  </span>
+                                ))}
+                              </div>
+                              <div className="budget-meta">
+                                <span className={`status-chip ${budgetStatusClass(budget.status)}`}>
+                                  {formatBudgetStatus(budget.status)}
+                                </span>
+                                <strong>{formatCurrency(budget.total_amount)}</strong>
+                              </div>
+                            </div>
+                            <div className="admin-order-side">
+                              <select
+                                value={budget.status}
+                                onChange={(event) =>
+                                  handleBudgetStatusChange(budget.id, event.target.value)
+                                }
+                              >
+                                <option value="pendente">pendente</option>
+                                <option value="aprovado">aprovado</option>
+                                <option value="recusado">recusado</option>
+                              </select>
+                              <a
+                                className="secondary-link admin-whats-link"
+                                href={buildBudgetWhatsAppHref({
+                                  name: budget.customer_name,
+                                  phone: budget.customer_phone,
+                                  address: budget.customer_address,
+                                  notes: budget.notes,
+                                  services: (budget.budget_items || []).map((item) => ({
+                                    name: item.service_name_snapshot
+                                  })),
+                                  totalAmount: budget.total_amount
+                                })}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                <WhatsAppIcon />
+                                <span>WhatsApp</span>
+                              </a>
+                              <button
+                                className="secondary-button danger-button"
+                                type="button"
+                                onClick={() => handleDeleteBudget(budget.id)}
+                              >
+                                Excluir
+                              </button>
+                            </div>
+                          </article>
+                        ))
+                      ) : (
+                        <div className="empty-state-card">
+                          Nenhum orcamento cadastrado ainda.
+                        </div>
+                      )}
+                    </div>
+                  </article>
+                </div>
+              </AdminGate>
+            </section>
+          )}
+
+          {activeSection === "clients" && (
+            <section className="section-panel active">
+              <AdminGate
+                session={adminSession}
+                adminProfile={adminProfile}
+                authForm={authForm}
+                authState={authState}
+                checkingAdmin={checkingAdmin}
+                setAuthForm={setAuthForm}
+                onSubmit={handleAdminLogin}
+                onLogout={handleLogout}
+              >
+                <div className="section-heading">
+                  <div>
+                    <p className="eyebrow">Clientes</p>
+                    <h3>Clientes cadastrados</h3>
+                  </div>
+                </div>
+
+                {loadingAdmin ? (
+                  <div className="panel-card">Carregando clientes...</div>
+                ) : (
+                  <div className="cards-grid">
+                    {clients.length ? (
+                      clients.map((client) => {
+                        const history = client.orders || [];
+                        const lastOrder = history[0];
+                        const totalClientRevenue = history.reduce(
+                          (sum, order) => sum + Number(order.total_amount || 0),
+                          0
+                        );
+
+                        return (
+                          <article className="mini-card client-card" key={client.id}>
+                            <div className="mini-card-top">
+                              <h4>{client.name}</h4>
+                              <span className="tag">Cliente</span>
+                            </div>
+                            <p className="muted">{client.phone}</p>
+                            <p className="muted">{client.address}</p>
+                            <div className="client-history">
+                              <div className="client-history-item">
+                                <strong>{history.length}</strong>
+                                <span>pedido(s)</span>
+                              </div>
+                              <div className="client-history-item">
+                                <strong>{formatCurrency(totalClientRevenue)}</strong>
+                                <span>total salvo</span>
+                              </div>
+                            </div>
+                            <p className="muted">
+                              Ultimo pedido:{" "}
+                              {lastOrder ? formatDate(lastOrder.requested_at) : "ainda sem pedidos"}
+                            </p>
+                          </article>
+                        );
+                      })
+                    ) : (
+                      <div className="panel-card">Nenhum cliente encontrado.</div>
+                    )}
+                  </div>
+                )}
+              </AdminGate>
             </section>
           )}
 
           {!hasSupabaseEnv && (
             <div className="panel-card env-warning">
-              O app esta em modo de estrutura local. Configure
-              <code>VITE_SUPABASE_URL</code> e <code>VITE_SUPABASE_ANON_KEY</code> para
-              conectar o banco real.
+              O app esta em modo local. Configure <code>VITE_SUPABASE_URL</code> e{" "}
+              <code>VITE_SUPABASE_ANON_KEY</code> para conectar o banco real.
             </div>
           )}
         </main>
@@ -846,18 +1905,27 @@ export default function App() {
 
 function AdminGate({
   session,
+  adminProfile,
   authForm,
   authState,
+  checkingAdmin,
   setAuthForm,
   onSubmit,
   onLogout,
   children
 }) {
-  if (session) {
+  if (checkingAdmin) {
+    return <div className="panel-card">Validando acesso administrativo...</div>;
+  }
+
+  if (session && adminProfile) {
     return (
       <>
         <div className="admin-toolbar">
-          <span className="tag">Admin conectado</span>
+          <div className="admin-user-chip">
+            <span className="tag">Admin conectado</span>
+            <strong>{adminProfile.full_name || adminProfile.email}</strong>
+          </div>
           <button className="secondary-button" onClick={onLogout} type="button">
             Sair
           </button>
@@ -873,7 +1941,9 @@ function AdminGate({
         <p className="eyebrow">Painel interno</p>
         <h3>Entrar no administrativo</h3>
         <p className="muted">
-          Use um usuario do Supabase Auth para acessar clientes e pedidos.
+          Use um usuario do Supabase Auth que esteja cadastrado na tabela
+          <code> admin_users </code>
+          para acessar o painel.
         </p>
       </div>
 
@@ -931,6 +2001,45 @@ function buildWhatsAppHref({ name, phone, address, notes, services }) {
   return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 }
 
+function buildBudgetWhatsAppHref({
+  name,
+  phone,
+  address,
+  notes,
+  services,
+  totalAmount
+}) {
+  if (!services.length || !name || !phone || !address) {
+    return `https://wa.me/${whatsappNumber}`;
+  }
+
+  const message = [
+    `Ola, ${name}.`,
+    "Segue seu orcamento da JC Jardins com atendimento profissional e servicos planejados para o seu espaco.",
+    "",
+    `Cliente: ${name}`,
+    `Telefone: ${phone}`,
+    `Endereco: ${address}`,
+    `Servicos: ${services.map((item) => item.name).join(", ")}`,
+    `Valor total: ${formatCurrency(totalAmount)}`,
+    `Observacoes: ${notes || "Sem observacoes adicionais."}`,
+    "",
+    "Se quiser, podemos agendar a execucao e confirmar os detalhes pelo WhatsApp."
+  ].join("\n");
+
+  return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+}
+
+function buildSlug(value) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
+
 function formatCurrency(value) {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -945,11 +2054,35 @@ function formatDate(value) {
   );
 }
 
+function formatStatusLabel(status) {
+  return {
+    pendente: "Pendente",
+    "em andamento": "Em andamento",
+    concluido: "Concluido"
+  }[status] || status;
+}
+
+function formatBudgetStatus(status) {
+  return {
+    pendente: "Pendente",
+    aprovado: "Aprovado",
+    recusado: "Recusado"
+  }[status] || status;
+}
+
 function statusClass(status) {
   return {
     pendente: "agendada",
     "em andamento": "andamento",
     concluido: "concluida"
+  }[status] || "agendada";
+}
+
+function budgetStatusClass(status) {
+  return {
+    pendente: "agendada",
+    aprovado: "concluida",
+    recusado: "cancelada"
   }[status] || "agendada";
 }
 
