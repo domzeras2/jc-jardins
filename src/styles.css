@@ -254,7 +254,7 @@ button, input, select, textarea, a { font: inherit; }
   font-weight: 800;
 }
 .garden-chip { background: rgba(255, 255, 255, 0.14); color: #f3fff4; }
-.garden-mini-list, .service-catalog, .cards-grid, .stats-grid, .list-stack, .request-shell, .service-picker, .summary-services, .highlight-points { display: grid; gap: 18px; }
+.garden-mini-list, .service-catalog, .cards-grid, .stats-grid, .list-stack, .request-shell, .service-picker, .summary-services, .highlight-points, .testimonials-grid { display: grid; gap: 18px; }
 .garden-mini-item {
   display: block;
   padding: 16px 17px;
@@ -336,10 +336,59 @@ button, input, select, textarea, a { font: inherit; }
 .compact { margin-top: 24px; }
 
 .service-catalog { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.testimonials-grid { margin-top: 18px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
 .service-card, .request-card, .panel-card, .mini-card, .order-card, .invoice-card, .stat-card, .picker-card, .order-summary-card, .auth-card {
   background: var(--surface);
   backdrop-filter: blur(12px);
   border-radius: var(--radius-lg);
+}
+.testimonial-card {
+  position: relative;
+  overflow: hidden;
+  padding: 24px;
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(circle at top right, rgba(87, 199, 110, 0.16), transparent 24%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(243, 250, 243, 0.95));
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 14px;
+}
+.testimonial-card::after {
+  content: "";
+  position: absolute;
+  inset: auto -24px -32px auto;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(223, 241, 224, 0.82), transparent 70%);
+  pointer-events: none;
+}
+.testimonial-stars {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 4px;
+  font-size: 1rem;
+  color: rgba(122, 90, 9, 0.24);
+}
+.testimonial-stars .filled {
+  color: #d6a62a;
+}
+.testimonial-comment,
+.testimonial-name {
+  position: relative;
+  z-index: 1;
+}
+.testimonial-comment {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.65;
+}
+.testimonial-name {
+  font-family: "Outfit", sans-serif;
+  font-size: 1rem;
 }
 .service-card { position: relative; overflow: hidden; padding: 22px; display: grid; gap: 16px; }
 .service-card.selected {

@@ -47,6 +47,33 @@ const fallbackServices = [
   }
 ];
 
+const testimonials = [
+  {
+    name: "Mariana Lopes",
+    rating: 5,
+    comment:
+      "Serviço muito caprichado, atendimento educado e jardim impecável no final. Passa bastante confiança."
+  },
+  {
+    name: "Carlos Henrique",
+    rating: 5,
+    comment:
+      "Fecharam corte de grama, poda e limpeza no mesmo atendimento. Foi prático e o resultado ficou excelente."
+  },
+  {
+    name: "Patrícia Almeida",
+    rating: 5,
+    comment:
+      "Gostei da organização e da pontualidade. O espaço ficou limpo, bonito e com aparência profissional."
+  },
+  {
+    name: "Rogério Martins",
+    rating: 4,
+    comment:
+      "Atendimento rápido, orçamento claro e execução muito bem feita. Recomendo para manutenção de jardim."
+  }
+];
+
 const initialForm = {
   name: "",
   phone: "",
@@ -903,6 +930,32 @@ export default function App() {
                     );
                   })
                 )}
+              </div>
+
+              <section className="section-heading compact testimonials-heading">
+                <div>
+                  <p className="eyebrow">Avaliações</p>
+                  <h3>O que os clientes dizem</h3>
+                </div>
+              </section>
+
+              <div className="testimonials-grid">
+                {testimonials.map((testimonial) => (
+                  <article className="testimonial-card" key={testimonial.name}>
+                    <div className="testimonial-stars" aria-label={`${testimonial.rating} de 5 estrelas`}>
+                      {Array.from({ length: 5 }, (_, index) => (
+                        <span
+                          key={`${testimonial.name}-${index}`}
+                          className={index < testimonial.rating ? "filled" : ""}
+                        >
+                          ★
+                        </span>
+                      ))}
+                    </div>
+                    <p className="testimonial-comment">“{testimonial.comment}”</p>
+                    <strong className="testimonial-name">{testimonial.name}</strong>
+                  </article>
+                ))}
               </div>
 
               <section id="request-form" className="request-shell">
