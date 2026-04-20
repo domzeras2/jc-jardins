@@ -777,7 +777,7 @@ export default function App() {
                   </div>
 
                   <p className="hero-tagline">
-                    Seu jardim bonito e bem cuidado, sem complicacao.
+                    Seu jardim bonito e bem cuidado, sem complicação.
                   </p>
                   <p className="hero-text">
                     Contrate vários serviços em uma única solicitação, com
