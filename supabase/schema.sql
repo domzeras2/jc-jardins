@@ -61,6 +61,17 @@ create table if not exists public.budget_items (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.reviews (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  phone text,
+  neighborhood text,
+  rating integer not null check (rating between 1 and 5),
+  comment text not null,
+  status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
+  created_at timestamptz not null default now()
+);
+
 create table if not exists public.admin_users (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null unique,
@@ -82,6 +93,7 @@ create index if not exists order_items_order_id_idx on public.order_items(order_
 create index if not exists order_items_service_id_idx on public.order_items(service_id);
 create index if not exists budgets_client_id_idx on public.budgets(client_id);
 create index if not exists budget_items_budget_id_idx on public.budget_items(budget_id);
+create index if not exists reviews_status_idx on public.reviews(status);
 create index if not exists admin_users_user_id_idx on public.admin_users(user_id);
 
 insert into public.services (slug, name, description, base_price, icon, sort_order)
@@ -173,6 +185,7 @@ alter table public.orders enable row level security;
 alter table public.order_items enable row level security;
 alter table public.budgets enable row level security;
 alter table public.budget_items enable row level security;
+alter table public.reviews enable row level security;
 alter table public.admin_users enable row level security;
 
 drop policy if exists "public can read active services" on public.services;
@@ -245,6 +258,28 @@ with check (public.is_admin());
 drop policy if exists "admins can manage budget_items" on public.budget_items;
 create policy "admins can manage budget_items"
 on public.budget_items
+for all
+to authenticated
+using (public.is_admin())
+with check (public.is_admin());
+
+drop policy if exists "public can insert reviews" on public.reviews;
+create policy "public can insert reviews"
+on public.reviews
+for insert
+to anon, authenticated
+with check (status = 'pending');
+
+drop policy if exists "public can read approved reviews" on public.reviews;
+create policy "public can read approved reviews"
+on public.reviews
+for select
+to anon, authenticated
+using (status = 'approved' or public.is_admin());
+
+drop policy if exists "admins can manage reviews" on public.reviews;
+create policy "admins can manage reviews"
+on public.reviews
 for all
 to authenticated
 using (public.is_admin())

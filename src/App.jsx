@@ -47,27 +47,31 @@ const fallbackServices = [
   }
 ];
 
-const testimonials = [
+const fallbackTestimonials = [
   {
     name: "Mariana Lopes",
+    neighborhood: "Santa Felicidade",
     rating: 5,
     comment:
       "Serviço muito caprichado, atendimento educado e jardim impecável no final. Passa bastante confiança."
   },
   {
     name: "Carlos Henrique",
+    neighborhood: "Boa Vista",
     rating: 5,
     comment:
       "Fecharam corte de grama, poda e limpeza no mesmo atendimento. Foi prático e o resultado ficou excelente."
   },
   {
     name: "Patrícia Almeida",
+    neighborhood: "Água Verde",
     rating: 5,
     comment:
       "Gostei da organização e da pontualidade. O espaço ficou limpo, bonito e com aparência profissional."
   },
   {
     name: "Rogério Martins",
+    neighborhood: "São José dos Pinhais",
     rating: 4,
     comment:
       "Atendimento rápido, orçamento claro e execução muito bem feita. Recomendo para manutenção de jardim."
@@ -99,12 +103,21 @@ const initialBudgetForm = {
   manualTotal: ""
 };
 
+const initialReviewForm = {
+  name: "",
+  phone: "",
+  neighborhood: "",
+  rating: 5,
+  comment: ""
+};
+
 const publicSections = [{ id: "home", label: "Início" }];
 
 const adminSections = [
   { id: "dashboard", label: "Dashboard" },
   { id: "orders", label: "Pedidos" },
   { id: "budgets", label: "Orçamentos" },
+  { id: "reviews", label: "Avaliações" },
   { id: "services", label: "Serviços" },
   { id: "clients", label: "Clientes" }
 ];
@@ -116,6 +129,8 @@ export default function App() {
   const [clients, setClients] = useState([]);
   const [orders, setOrders] = useState([]);
   const [budgets, setBudgets] = useState([]);
+  const [reviews, setReviews] = useState(fallbackTestimonials);
+  const [adminReviews, setAdminReviews] = useState([]);
   const [form, setForm] = useState(initialForm);
   const [selectedServices, setSelectedServices] = useState([]);
   const [submitState, setSubmitState] = useState({ type: "", message: "" });
@@ -133,9 +148,13 @@ export default function App() {
   const [selectedBudgetServices, setSelectedBudgetServices] = useState([]);
   const [budgetState, setBudgetState] = useState({ type: "", message: "" });
   const [savingBudget, setSavingBudget] = useState(false);
+  const [reviewForm, setReviewForm] = useState(initialReviewForm);
+  const [reviewState, setReviewState] = useState({ type: "", message: "" });
+  const [savingReview, setSavingReview] = useState(false);
 
   useEffect(() => {
     loadPublicServices();
+    loadPublicReviews();
   }, []);
 
   useEffect(() => {
@@ -169,6 +188,7 @@ export default function App() {
       setClients([]);
       setOrders([]);
       setBudgets([]);
+      setAdminReviews([]);
       setAdminServices([]);
       setCheckingAdmin(false);
       setLoadingAdmin(false);
@@ -247,6 +267,29 @@ export default function App() {
     setLoadingServices(false);
   }
 
+  async function loadPublicReviews() {
+    if (!hasSupabaseEnv) {
+      setReviews(fallbackTestimonials);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("reviews")
+      .select("id, name, neighborhood, rating, comment")
+      .eq("status", "approved")
+      .order("created_at", { ascending: false })
+      .limit(6);
+
+    if (!error && data?.length) {
+      setReviews(data);
+      return;
+    }
+
+    if (!error && data && data.length === 0) {
+      setReviews([]);
+    }
+  }
+
   async function verifyAdminAccess(session) {
     setCheckingAdmin(true);
     setAuthState({ type: "", message: "" });
@@ -279,7 +322,13 @@ export default function App() {
 
     setLoadingAdmin(true);
 
-    const [servicesResponse, clientsResponse, ordersResponse, budgetsResponse] = await Promise.all([
+    const [
+      servicesResponse,
+      clientsResponse,
+      ordersResponse,
+      budgetsResponse,
+      reviewsResponse
+    ] = await Promise.all([
       supabase
         .from("services")
         .select("*")
@@ -302,6 +351,10 @@ export default function App() {
         .select(
           "id, customer_name, customer_phone, customer_address, notes, status, subtotal_amount, total_amount, created_at, budget_items(id, service_name_snapshot, price_snapshot)"
         )
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("reviews")
+        .select("id, name, phone, neighborhood, rating, comment, status, created_at")
         .order("created_at", { ascending: false })
     ]);
 
@@ -319,6 +372,10 @@ export default function App() {
 
     if (!budgetsResponse.error) {
       setBudgets(budgetsResponse.data || []);
+    }
+
+    if (!reviewsResponse.error) {
+      setAdminReviews(reviewsResponse.data || []);
     }
 
     setLoadingAdmin(false);
@@ -654,6 +711,78 @@ export default function App() {
     await loadAdminData();
   }
 
+  async function handleReviewSubmit(event) {
+    event.preventDefault();
+
+    if (!supabase) {
+      setReviewState({
+        type: "error",
+        message: "Configure o Supabase para receber avaliações reais."
+      });
+      return;
+    }
+
+    setSavingReview(true);
+    setReviewState({ type: "loading", message: "Enviando avaliação..." });
+
+    const payload = {
+      name: reviewForm.name.trim(),
+      phone: reviewForm.phone.trim() || null,
+      neighborhood: reviewForm.neighborhood.trim() || null,
+      rating: Number(reviewForm.rating || 5),
+      comment: reviewForm.comment.trim(),
+      status: "pending"
+    };
+
+    const { error } = await supabase.from("reviews").insert(payload);
+
+    if (error) {
+      setReviewState({
+        type: "error",
+        message: "Não foi possível enviar sua avaliação agora."
+      });
+      setSavingReview(false);
+      return;
+    }
+
+    setReviewState({
+      type: "success",
+      message:
+        "Avaliação enviada com sucesso. Ela ficará visível no site após aprovação."
+    });
+    setReviewForm(initialReviewForm);
+    setSavingReview(false);
+  }
+
+  async function handleReviewStatusChange(reviewId, nextStatus) {
+    if (!supabase) return;
+
+    const { error } = await supabase
+      .from("reviews")
+      .update({ status: nextStatus })
+      .eq("id", reviewId);
+
+    if (!error) {
+      await Promise.all([loadAdminData(), loadPublicReviews()]);
+    }
+  }
+
+  async function handleDeleteReview(reviewId) {
+    if (!supabase) return;
+
+    const confirmed = window.confirm("Excluir esta avaliação?");
+
+    if (!confirmed) {
+      return;
+    }
+
+    const { error } = await supabase.from("reviews").delete().eq("id", reviewId);
+
+    if (!error) {
+      await Promise.all([loadAdminData(), loadPublicReviews()]);
+    }
+  }
+
   function handleFormChange(event) {
     const { name, value } = event.target;
     setForm((current) => ({ ...current, [name]: value }));
@@ -670,6 +799,11 @@ export default function App() {
   function handleBudgetFormChange(event) {
     const { name, value } = event.target;
     setBudgetForm((current) => ({ ...current, [name]: value }));
+  }
+
+  function handleReviewFormChange(event) {
+    const { name, value } = event.target;
+    setReviewForm((current) => ({ ...current, [name]: value }));
   }
 
   function toggleService(serviceId) {
@@ -940,23 +1074,116 @@ export default function App() {
               </section>
 
               <div className="testimonials-grid">
-                {testimonials.map((testimonial) => (
-                  <article className="testimonial-card" key={testimonial.name}>
-                    <div className="testimonial-stars" aria-label={`${testimonial.rating} de 5 estrelas`}>
-                      {Array.from({ length: 5 }, (_, index) => (
-                        <span
-                          key={`${testimonial.name}-${index}`}
-                          className={index < testimonial.rating ? "filled" : ""}
-                        >
-                          ★
-                        </span>
-                      ))}
-                    </div>
-                    <p className="testimonial-comment">“{testimonial.comment}”</p>
-                    <strong className="testimonial-name">{testimonial.name}</strong>
+                {reviews.length ? (
+                  reviews.map((testimonial) => (
+                    <article className="testimonial-card" key={testimonial.id || testimonial.name}>
+                      <div className="testimonial-stars" aria-label={`${testimonial.rating} de 5 estrelas`}>
+                        {Array.from({ length: 5 }, (_, index) => (
+                          <span
+                            key={`${testimonial.name}-${index}`}
+                            className={index < testimonial.rating ? "filled" : ""}
+                          >
+                            ★
+                          </span>
+                        ))}
+                      </div>
+                      <p className="testimonial-comment">“{testimonial.comment}”</p>
+                      <div className="testimonial-footer">
+                        <strong className="testimonial-name">{testimonial.name}</strong>
+                        {testimonial.neighborhood && (
+                          <span className="testimonial-location">{testimonial.neighborhood}</span>
+                        )}
+                      </div>
+                    </article>
+                  ))
+                ) : (
+                  <article className="panel-card">
+                    <p>
+                      As primeiras avaliações aprovadas dos clientes aparecerão aqui.
+                    </p>
                   </article>
-                ))}
+                )}
               </div>
+
+              <section className="review-shell">
+                <article className="request-card">
+                  <div className="request-intro">
+                    <div>
+                      <p className="eyebrow">Sua opinião</p>
+                      <h3>Deixe sua avaliação</h3>
+                    </div>
+                    <span className="live-pill">Envio espontâneo</span>
+                  </div>
+
+                  <form className="request-form" onSubmit={handleReviewSubmit}>
+                    <div className="form-grid">
+                      <label>
+                        Nome
+                        <input
+                          name="name"
+                          value={reviewForm.name}
+                          onChange={handleReviewFormChange}
+                          placeholder="Seu nome"
+                          required
+                        />
+                      </label>
+                      <label>
+                        Telefone
+                        <input
+                          name="phone"
+                          value={reviewForm.phone}
+                          onChange={handleReviewFormChange}
+                          placeholder="Opcional"
+                        />
+                      </label>
+                      <label>
+                        Bairro
+                        <input
+                          name="neighborhood"
+                          value={reviewForm.neighborhood}
+                          onChange={handleReviewFormChange}
+                          placeholder="Seu bairro ou cidade"
+                        />
+                      </label>
+                      <label>
+                        Nota
+                        <select
+                          name="rating"
+                          value={reviewForm.rating}
+                          onChange={handleReviewFormChange}
+                        >
+                          <option value="5">5 estrelas</option>
+                          <option value="4">4 estrelas</option>
+                          <option value="3">3 estrelas</option>
+                          <option value="2">2 estrelas</option>
+                          <option value="1">1 estrela</option>
+                        </select>
+                      </label>
+                      <label className="full-span">
+                        Comentário
+                        <textarea
+                          name="comment"
+                          value={reviewForm.comment}
+                          onChange={handleReviewFormChange}
+                          rows={4}
+                          placeholder="Conte como foi sua experiência com a JC Jardins"
+                          required
+                        />
+                      </label>
+                    </div>
+
+                    {reviewState.message && (
+                      <p className={`feedback ${reviewState.type}`}>{reviewState.message}</p>
+                    )}
+
+                    <div className="request-actions">
+                      <button className="primary-button" type="submit" disabled={savingReview}>
+                        Enviar avaliação
+                      </button>
+                    </div>
+                  </form>
+                </article>
+              </section>
 
               <section id="request-form" className="request-shell">
                 <article className="request-card">
@@ -1878,6 +2105,89 @@ export default function App() {
             </section>
           )}
 
+          {activeSection === "reviews" && (
+            <section className="section-panel active">
+              <AdminGate
+                session={adminSession}
+                adminProfile={adminProfile}
+                authForm={authForm}
+                authState={authState}
+                checkingAdmin={checkingAdmin}
+                setAuthForm={setAuthForm}
+                onSubmit={handleAdminLogin}
+                onLogout={handleLogout}
+              >
+                <div className="section-heading">
+                  <div>
+                    <p className="eyebrow">Avaliações</p>
+                    <h3>Modere as avaliações recebidas</h3>
+                  </div>
+                </div>
+
+                {loadingAdmin ? (
+                  <div className="panel-card">Carregando avaliações...</div>
+                ) : (
+                  <div className="list-stack">
+                    {adminReviews.length ? (
+                      adminReviews.map((review) => (
+                        <article className="admin-list-row review-row" key={review.id}>
+                          <div className="budget-main">
+                            <div className="review-head">
+                              <strong>{review.name}</strong>
+                              <span className={`status-chip ${reviewStatusClass(review.status)}`}>
+                                {formatReviewStatus(review.status)}
+                              </span>
+                            </div>
+                            <div className="testimonial-stars" aria-label={`${review.rating} de 5 estrelas`}>
+                              {Array.from({ length: 5 }, (_, index) => (
+                                <span
+                                  key={`${review.id}-${index}`}
+                                  className={index < review.rating ? "filled" : ""}
+                                >
+                                  ★
+                                </span>
+                              ))}
+                            </div>
+                            <p className="muted">
+                              {review.neighborhood || "Bairro não informado"}
+                              {review.phone ? ` | ${review.phone}` : ""}
+                            </p>
+                            <p className="testimonial-comment">“{review.comment}”</p>
+                          </div>
+                          <div className="admin-order-side">
+                            <button
+                              className="secondary-button success-button"
+                              type="button"
+                              onClick={() => handleReviewStatusChange(review.id, "approved")}
+                            >
+                              Aprovar
+                            </button>
+                            <button
+                              className="secondary-button"
+                              type="button"
+                              onClick={() => handleReviewStatusChange(review.id, "rejected")}
+                            >
+                              Rejeitar
+                            </button>
+                            <button
+                              className="secondary-button danger-button"
+                              type="button"
+                              onClick={() => handleDeleteReview(review.id)}
+                            >
+                              Excluir
+                            </button>
+                          </div>
+                        </article>
+                      ))
+                    ) : (
+                      <div className="panel-card">Nenhuma avaliação recebida ainda.</div>
+                    )}
+                  </div>
+                )}
+              </AdminGate>
+            </section>
+          )}
+
           {activeSection === "clients" && (
             <section className="section-panel active">
               <AdminGate
@@ -2123,6 +2433,14 @@ function formatBudgetStatus(status) {
   }[status] || status;
 }
 
+function formatReviewStatus(status) {
+  return {
+    pending: "Pendente",
+    approved: "Aprovada",
+    rejected: "Rejeitada"
+  }[status] || status;
+}
+
 function statusClass(status) {
   return {
     pendente: "agendada",
@@ -2136,6 +2454,14 @@ function budgetStatusClass(status) {
     pendente: "agendada",
     aprovado: "concluida",
     recusado: "cancelada"
+  }[status] || "agendada";
+}
+
+function reviewStatusClass(status) {
+  return {
+    pending: "agendada",
+    approved: "concluida",
+    rejected: "cancelada"
   }[status] || "agendada";
 }
 

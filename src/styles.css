@@ -254,7 +254,7 @@ button, input, select, textarea, a { font: inherit; }
   font-weight: 800;
 }
 .garden-chip { background: rgba(255, 255, 255, 0.14); color: #f3fff4; }
-.garden-mini-list, .service-catalog, .cards-grid, .stats-grid, .list-stack, .request-shell, .service-picker, .summary-services, .highlight-points, .testimonials-grid { display: grid; gap: 18px; }
+.garden-mini-list, .service-catalog, .cards-grid, .stats-grid, .list-stack, .request-shell, .review-shell, .service-picker, .summary-services, .highlight-points, .testimonials-grid { display: grid; gap: 18px; }
 .garden-mini-item {
   display: block;
   padding: 16px 17px;
@@ -381,6 +381,12 @@ button, input, select, textarea, a { font: inherit; }
   position: relative;
   z-index: 1;
 }
+.testimonial-footer {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 4px;
+}
 .testimonial-comment {
   margin: 0;
   color: var(--text);
@@ -389,6 +395,10 @@ button, input, select, textarea, a { font: inherit; }
 .testimonial-name {
   font-family: "Outfit", sans-serif;
   font-size: 1rem;
+}
+.testimonial-location {
+  color: var(--muted);
+  font-size: 0.92rem;
 }
 .service-card { position: relative; overflow: hidden; padding: 22px; display: grid; gap: 16px; }
 .service-card.selected {
@@ -431,6 +441,9 @@ button, input, select, textarea, a { font: inherit; }
   margin-top: 26px;
   align-items: start;
   grid-template-columns: minmax(0, 1.24fr) minmax(300px, 0.76fr);
+}
+.review-shell {
+  margin-top: 26px;
 }
 .request-card, .panel-card, .invoice-card, .order-card, .stat-card, .order-summary-card, .auth-card {
   padding: 24px;
@@ -778,6 +791,14 @@ textarea { resize: vertical; }
 .budget-meta {
   display: flex;
   align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.review-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
 }

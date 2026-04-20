@@ -92,6 +92,16 @@ O schema está em [supabase/schema.sql](C:\Users\gabri\Documents\New project\sup
   - price_snapshot
   - created_at
 
+- `reviews`
+  - id
+  - name
+  - phone
+  - neighborhood
+  - rating
+  - comment
+  - status
+  - created_at
+
 - `admin_users`
   - id
   - user_id
