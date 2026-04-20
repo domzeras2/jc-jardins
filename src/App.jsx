@@ -9,7 +9,7 @@ const fallbackServices = [
     id: "fallback-corte",
     slug: "corte-de-grama",
     name: "Corte de grama",
-    description: "Corte uniforme, acabamento e organizacao do gramado.",
+    description: "Corte uniforme, acabamento e organização do gramado.",
     base_price: 160,
     icon: "grass",
     sort_order: 1,
@@ -19,7 +19,7 @@ const fallbackServices = [
     id: "fallback-limpeza",
     slug: "limpeza-de-terreno",
     name: "Limpeza de terreno",
-    description: "Remocao de mato, folhas, galhos e limpeza geral do terreno.",
+    description: "Remoção de mato, folhas, galhos e limpeza geral do terreno.",
     base_price: 220,
     icon: "terrain",
     sort_order: 2,
@@ -28,8 +28,8 @@ const fallbackServices = [
   {
     id: "fallback-poda",
     slug: "poda-de-arvores",
-    name: "Poda de arvores",
-    description: "Poda cuidadosa para melhorar seguranca, visual e saude das plantas.",
+    name: "Poda de árvores",
+    description: "Poda cuidadosa para melhorar a segurança, o visual e a saúde das plantas.",
     base_price: 280,
     icon: "shears",
     sort_order: 3,
@@ -38,8 +38,8 @@ const fallbackServices = [
   {
     id: "fallback-manutencao",
     slug: "manutencao-de-jardim",
-    name: "Manutencao de jardim",
-    description: "Manutencao periodica com capricho para manter o jardim sempre bonito.",
+    name: "Manutenção de jardim",
+    description: "Manutenção periódica com capricho para manter o jardim sempre bonito.",
     base_price: 190,
     icon: "leaf",
     sort_order: 4,
@@ -72,13 +72,13 @@ const initialBudgetForm = {
   manualTotal: ""
 };
 
-const publicSections = [{ id: "home", label: "Inicio" }];
+const publicSections = [{ id: "home", label: "Início" }];
 
 const adminSections = [
   { id: "dashboard", label: "Dashboard" },
   { id: "orders", label: "Pedidos" },
-  { id: "budgets", label: "Orcamentos" },
-  { id: "services", label: "Servicos" },
+  { id: "budgets", label: "Orçamentos" },
+  { id: "services", label: "Serviços" },
   { id: "clients", label: "Clientes" }
 ];
 
@@ -237,7 +237,7 @@ export default function App() {
       setAuthState({
         type: "error",
         message:
-          "Este usuario nao esta autorizado no painel. Cadastre-o na tabela admin_users."
+          "Este usuário não está autorizado no painel. Cadastre-o na tabela admin_users."
       });
       return;
     }
@@ -303,7 +303,7 @@ export default function App() {
     if (!selectedServiceObjects.length) {
       setSubmitState({
         type: "error",
-        message: "Selecione pelo menos um servico antes de enviar."
+        message: "Selecione pelo menos um serviço antes de enviar."
       });
       return;
     }
@@ -311,7 +311,7 @@ export default function App() {
     if (!hasSupabaseEnv || !supabase) {
       setSubmitState({
         type: "error",
-        message: "Configure as variaveis do Supabase antes de usar em producao."
+        message: "Configure as variáveis do Supabase antes de usar em produção."
       });
       return;
     }
@@ -329,7 +329,7 @@ export default function App() {
     if (error) {
       setSubmitState({
         type: "error",
-        message: "Nao foi possivel enviar o pedido. Revise a configuracao do banco."
+        message: "Não foi possível enviar o pedido. Revise a configuração do banco."
       });
       return;
     }
@@ -367,7 +367,7 @@ export default function App() {
     if (error) {
       setAuthState({
         type: "error",
-        message: "Nao foi possivel entrar. Verifique e-mail e senha."
+        message: "Não foi possível entrar. Verifique o e-mail e a senha."
       });
       return;
     }
@@ -382,7 +382,7 @@ export default function App() {
       await supabase.auth.signOut();
       setAuthState({
         type: "error",
-        message: "Login feito, mas este usuario nao tem permissao de admin."
+        message: "Login realizado, mas este usuário não tem permissão de administrador."
       });
       return;
     }
@@ -414,7 +414,7 @@ export default function App() {
     if (!supabase) return;
 
     setSavingService(true);
-    setServiceState({ type: "loading", message: "Salvando servico..." });
+    setServiceState({ type: "loading", message: "Salvando serviço..." });
 
     const payload = {
       name: serviceForm.name.trim(),
@@ -436,7 +436,7 @@ export default function App() {
       setServiceState({
         type: "error",
         message:
-          "Nao foi possivel salvar o servico. Verifique slug, permissoes ou dados duplicados."
+          "Não foi possível salvar o serviço. Verifique o slug, as permissões ou dados duplicados."
       });
       setSavingService(false);
       return false;
@@ -445,8 +445,8 @@ export default function App() {
     setServiceState({
       type: "success",
       message: serviceForm.id
-        ? "Servico atualizado com sucesso."
-        : "Servico criado com sucesso."
+        ? "Serviço atualizado com sucesso."
+        : "Serviço criado com sucesso."
     });
     setServiceForm(initialServiceForm);
     await Promise.all([loadAdminData(), loadPublicServices()]);
@@ -463,7 +463,7 @@ export default function App() {
     if (!supabase) return;
 
     const confirmed = window.confirm(
-      `Remover o servico "${service.name}" do painel?`
+      `Remover o serviço "${service.name}" do painel?`
     );
 
     if (!confirmed) {
@@ -476,14 +476,14 @@ export default function App() {
       setServiceState({
         type: "error",
         message:
-          "Nao foi possivel remover o servico. Confirme a politica de delete no Supabase."
+          "Não foi possível remover o serviço. Confirme a política de exclusão no Supabase."
       });
       return;
     }
 
     setServiceState({
       type: "success",
-      message: "Servico removido com sucesso."
+      message: "Serviço removido com sucesso."
     });
 
     if (serviceForm.id === service.id) {
@@ -501,13 +501,13 @@ export default function App() {
     if (!selectedBudgetServiceObjects.length) {
       setBudgetState({
         type: "error",
-        message: "Selecione pelo menos um servico para criar o orcamento."
+        message: "Selecione pelo menos um serviço para criar o orçamento."
       });
       return;
     }
 
     setSavingBudget(true);
-    setBudgetState({ type: "loading", message: "Salvando orcamento..." });
+    setBudgetState({ type: "loading", message: "Salvando orçamento..." });
 
     const { data: clientData, error: clientError } = await supabase
       .from("clients")
@@ -525,7 +525,7 @@ export default function App() {
     if (clientError) {
       setBudgetState({
         type: "error",
-        message: "Nao foi possivel salvar os dados do cliente do orcamento."
+        message: "Não foi possível salvar os dados do cliente do orçamento."
       });
       setSavingBudget(false);
       return;
@@ -551,7 +551,7 @@ export default function App() {
     if (budgetError || !budgetRecord) {
       setBudgetState({
         type: "error",
-        message: "Nao foi possivel salvar o orcamento no Supabase."
+        message: "Não foi possível salvar o orçamento no Supabase."
       });
       setSavingBudget(false);
       return;
@@ -572,7 +572,7 @@ export default function App() {
       await supabase.from("budgets").delete().eq("id", budgetRecord.id);
       setBudgetState({
         type: "error",
-        message: "Nao foi possivel salvar os itens do orcamento."
+        message: "Não foi possível salvar os itens do orçamento."
       });
       setSavingBudget(false);
       return;
@@ -580,7 +580,7 @@ export default function App() {
 
     setBudgetState({
       type: "success",
-      message: "Orcamento criado com sucesso."
+      message: "Orçamento criado com sucesso."
     });
     setBudgetForm(initialBudgetForm);
     setSelectedBudgetServices([]);
@@ -604,7 +604,7 @@ export default function App() {
   async function handleDeleteBudget(budgetId) {
     if (!supabase) return;
 
-    const confirmed = window.confirm("Excluir este orcamento?");
+    const confirmed = window.confirm("Excluir este orçamento?");
 
     if (!confirmed) {
       return;
@@ -615,14 +615,14 @@ export default function App() {
     if (error) {
       setBudgetState({
         type: "error",
-        message: "Nao foi possivel excluir o orcamento."
+        message: "Não foi possível excluir o orçamento."
       });
       return;
     }
 
     setBudgetState({
       type: "success",
-      message: "Orcamento removido com sucesso."
+      message: "Orçamento removido com sucesso."
     });
     await loadAdminData();
   }
@@ -690,8 +690,8 @@ export default function App() {
     setForm({
       name: "Residencial Bosque Verde",
       phone: "(41) 98888-1200",
-      address: "Rua das Araucarias, 1200 - Curitiba",
-      notes: "Fazer acabamento das bordas e revisar canteiros."
+      address: "Rua das Araucárias, 1200 - Curitiba",
+      notes: "Fazer acabamento nas bordas e revisar canteiros."
     });
     setSelectedServices(services.slice(0, 3).map((item) => item.id));
   }
@@ -716,7 +716,7 @@ export default function App() {
               <LogoMark />
             </div>
             <div>
-              <p className="eyebrow">Jardinagem Profissional</p>
+              <p className="eyebrow">Jardinagem profissional</p>
               <h1>JC Jardins</h1>
             </div>
           </div>
@@ -752,11 +752,11 @@ export default function App() {
           </nav>
 
           <div className="sidebar-card">
-            <p className="eyebrow">Operacao</p>
-            <h3>Site publico na frente e painel protegido por login no mesmo projeto</h3>
+            <p className="eyebrow">Operação</p>
+            <h3>Site público na frente e painel protegido por login no mesmo projeto</h3>
             <p>
-              O cliente solicita online, o pedido entra no painel e voce gerencia
-              servicos, clientes e andamento sem mexer no codigo.
+              O cliente solicita online, o pedido entra no painel e você gerencia
+              serviços, clientes e andamento sem mexer no código.
             </p>
           </div>
         </aside>
@@ -780,7 +780,7 @@ export default function App() {
                     Seu jardim bonito e bem cuidado, sem complicacao.
                   </p>
                   <p className="hero-text">
-                    Contrate varios servicos em uma unica solicitacao, com
+                    Contrate vários serviços em uma única solicitação, com
                     resumo do pedido e envio direto pelo WhatsApp.
                   </p>
 
@@ -794,7 +794,7 @@ export default function App() {
                           ?.scrollIntoView({ behavior: "smooth", block: "start" })
                       }
                     >
-                      Solicitar Servico
+                      Solicitar Serviço
                     </button>
                     <a
                       className="secondary-link"
@@ -809,10 +809,10 @@ export default function App() {
 
                   <div className="hero-badges">
                     <span className="hero-badge">
-                      Atendimento em Curitiba e regiao metropolitana
+                      Atendimento em Curitiba e região metropolitana
                     </span>
                     <span className="hero-badge">
-                      Varios servicos no mesmo pedido
+                      Vários serviços no mesmo pedido
                     </span>
                   </div>
                 </div>
@@ -823,13 +823,13 @@ export default function App() {
                   <div className="leaf leaf-three" />
                   <div className="garden-card">
                     <span className="garden-chip">Pedido inteligente</span>
-                    <h4>Contrate tudo em uma unica solicitacao</h4>
+                    <h4>Contrate tudo em uma única solicitação</h4>
                     <div className="garden-mini-list">
                       <div className="garden-mini-item">
                         <div>
                           <strong>Mais praticidade</strong>
                           <small>
-                            O cliente escolhe varios servicos em poucos toques.
+                            O cliente escolhe vários serviços em poucos toques.
                           </small>
                         </div>
                       </div>
@@ -837,7 +837,7 @@ export default function App() {
                         <div>
                           <strong>Resumo claro</strong>
                           <small>
-                            Nome, endereco, servicos e observacoes antes de enviar.
+                            Nome, endereço, serviços e observações antes de enviar.
                           </small>
                         </div>
                       </div>
@@ -848,8 +848,8 @@ export default function App() {
 
               <section className="section-heading compact">
                 <div>
-                  <p className="eyebrow">Servicos</p>
-                  <h3>Escolha um ou varios servicos</h3>
+                  <p className="eyebrow">Serviços</p>
+                  <h3>Escolha um ou vários serviços</h3>
                 </div>
                 {!hasSupabaseEnv && (
                   <button
@@ -864,7 +864,7 @@ export default function App() {
 
               <div className="service-catalog">
                 {loadingServices ? (
-                  <div className="panel-card">Carregando servicos...</div>
+                  <div className="panel-card">Carregando serviços...</div>
                 ) : (
                   services.map((service) => {
                     const selected = selectedServices.includes(service.id);
@@ -909,10 +909,10 @@ export default function App() {
                 <article className="request-card">
                   <div className="request-intro">
                     <div>
-                      <p className="eyebrow">Solicitacao</p>
+                      <p className="eyebrow">Solicitação</p>
                       <h3>Monte seu pedido</h3>
                     </div>
-                    <span className="live-pill">Multiplos servicos</span>
+                    <span className="live-pill">Múltiplos serviços</span>
                   </div>
 
                   <form className="request-form" onSubmit={handleSubmit}>
@@ -938,31 +938,31 @@ export default function App() {
                         />
                       </label>
                       <label className="full-span">
-                        Endereco
+                        Endereço
                         <input
                           name="address"
                           value={form.address}
                           onChange={handleFormChange}
-                          placeholder="Rua, numero e bairro"
+                          placeholder="Rua, número e bairro"
                           required
                         />
                       </label>
                       <label className="full-span">
-                        Observacoes
+                        Observações
                         <textarea
                           name="notes"
                           value={form.notes}
                           onChange={handleFormChange}
                           rows={4}
-                          placeholder="Conte o que precisa, horario, ponto de referencia ou detalhes do local"
+                          placeholder="Conte o que precisa, horário, ponto de referência ou detalhes do local"
                         />
                       </label>
                     </div>
 
                     <div className="multi-service-header">
                       <div>
-                        <p className="eyebrow">Selecao de servicos</p>
-                        <h4>Marque um ou varios itens</h4>
+                        <p className="eyebrow">Seleção de serviços</p>
+                        <h4>Marque um ou vários itens</h4>
                       </div>
                       <span className="selection-count">
                         {selectedServiceObjects.length} selecionado(s)
@@ -1019,14 +1019,14 @@ export default function App() {
                       <div className="summary-grid">
                         <div>
                           <span className="summary-label">Nome</span>
-                          <strong>{form.name || "Nao informado"}</strong>
+                          <strong>{form.name || "Não informado"}</strong>
                         </div>
                         <div>
-                          <span className="summary-label">Endereco</span>
-                          <strong>{form.address || "Nao informado"}</strong>
+                          <span className="summary-label">Endereço</span>
+                          <strong>{form.address || "Não informado"}</strong>
                         </div>
                         <div className="full-span">
-                          <span className="summary-label">Servicos selecionados</span>
+                          <span className="summary-label">Serviços selecionados</span>
                           <div
                             className={`summary-services ${
                               selectedServiceObjects.length ? "" : "empty-summary"
@@ -1040,14 +1040,14 @@ export default function App() {
                               ))
                             ) : (
                               <span>
-                                Selecione um ou mais servicos para montar o pedido.
+                                Selecione um ou mais serviços para montar o pedido.
                               </span>
                             )}
                           </div>
                         </div>
                         <div className="full-span">
-                          <span className="summary-label">Observacoes</span>
-                          <strong>{form.notes || "Sem observacoes adicionais."}</strong>
+                          <span className="summary-label">Observações</span>
+                          <strong>{form.notes || "Sem observações adicionais."}</strong>
                         </div>
                       </div>
                     </article>
@@ -1060,7 +1060,7 @@ export default function App() {
 
                     <div className="request-actions">
                       <button className="primary-button giant-button" type="submit">
-                        Enviar Solicitacao
+                        Enviar solicitação
                       </button>
                       <a
                         className={`whatsapp-panel-button ${
@@ -1088,13 +1088,13 @@ export default function App() {
                   <p className="eyebrow">Contato direto</p>
                   <h3>Atendimento claro e profissional</h3>
                   <p>
-                    Quando o cliente selecionar varios servicos, o pedido ja fica
-                    pronto para envio sem precisar entrar em contato varias vezes.
+                    Quando o cliente selecionar vários serviços, o pedido já fica
+                    pronto para envio sem precisar entrar em contato várias vezes.
                   </p>
                   <div className="highlight-points">
                     <div className="highlight-item">
                       <strong>1 pedido</strong>
-                      <span>varios servicos no mesmo fluxo</span>
+                      <span>vários serviços no mesmo fluxo</span>
                     </div>
                     <div className="highlight-item">
                       <strong>Resumo pronto</strong>
@@ -1125,7 +1125,7 @@ export default function App() {
                 <div className="section-heading">
                   <div>
                     <p className="eyebrow">Dashboard</p>
-                    <h3>Visao geral da operacao</h3>
+                    <h3>Visão geral da operação</h3>
                   </div>
                 </div>
 
@@ -1142,10 +1142,10 @@ export default function App() {
                       <article className="stat-card">
                         <span>Em andamento</span>
                         <strong>{inProgressOrders}</strong>
-                        <small>servicos em execucao</small>
+                        <small>serviços em execução</small>
                       </article>
                       <article className="stat-card accent">
-                        <span>Concluidos</span>
+                        <span>Concluídos</span>
                         <strong>{completedOrders}</strong>
                         <small>pedidos finalizados</small>
                       </article>
@@ -1161,7 +1161,7 @@ export default function App() {
                         <div className="panel-header">
                           <div>
                             <p className="eyebrow">Pedidos recentes</p>
-                            <h3>Ultimas solicitacoes</h3>
+                            <h3>Últimas solicitações</h3>
                           </div>
                           <button
                             className="secondary-button"
@@ -1201,7 +1201,7 @@ export default function App() {
                         <div className="panel-header">
                           <div>
                             <p className="eyebrow">Base cadastrada</p>
-                            <h3>Resumo rapido</h3>
+                            <h3>Resumo rápido</h3>
                           </div>
                         </div>
 
@@ -1211,12 +1211,12 @@ export default function App() {
                             <span>cadastros salvos no banco</span>
                           </div>
                           <div className="highlight-item">
-                            <strong>{adminServices.length} servicos</strong>
-                            <span>catalogo configurado no painel</span>
+                            <strong>{adminServices.length} serviços</strong>
+                            <span>catálogo configurado no painel</span>
                           </div>
                           <div className="highlight-item">
                             <strong>{adminServices.filter((item) => item.is_active).length} ativos</strong>
-                            <span>visiveis para o cliente no site</span>
+                            <span>visíveis para o cliente no site</span>
                           </div>
                         </div>
                       </article>
@@ -1261,7 +1261,7 @@ export default function App() {
                                 </span>
                               </p>
                               <h4>
-                                {(order.order_items || []).length} servico(s) para{" "}
+                                {(order.order_items || []).length} serviço(s) para{" "}
                                 {order.client?.name || "Cliente"}
                               </h4>
                               <p className="muted">
@@ -1270,7 +1270,7 @@ export default function App() {
                               </p>
                               <p className="muted">{order.client?.address}</p>
                               <p className="muted">
-                                {order.notes || "Sem observacoes adicionais."}
+                                {order.notes || "Sem observações adicionais."}
                               </p>
                               <div className="order-service-list">
                                 {(order.order_items || []).map((item) => (
@@ -1290,7 +1290,7 @@ export default function App() {
                               >
                                 <option value="pendente">pendente</option>
                                 <option value="em andamento">em andamento</option>
-                                <option value="concluido">concluido</option>
+                                <option value="concluido">concluído</option>
                               </select>
                             </div>
                           </div>
@@ -1319,15 +1319,15 @@ export default function App() {
               >
                 <div className="section-heading">
                   <div>
-                    <p className="eyebrow">Servicos</p>
-                    <h3>Gerencie o catalogo</h3>
+                    <p className="eyebrow">Serviços</p>
+                    <h3>Gerencie o catálogo</h3>
                   </div>
                   <button
                     className="secondary-button"
                     type="button"
                     onClick={resetServiceForm}
                   >
-                    Novo servico
+                    Novo serviço
                   </button>
                 </div>
 
@@ -1339,7 +1339,7 @@ export default function App() {
                           {serviceForm.id ? "Edicao" : "Cadastro"}
                         </p>
                         <h3>
-                          {serviceForm.id ? "Editar servico" : "Adicionar servico"}
+                          {serviceForm.id ? "Editar serviço" : "Adicionar serviço"}
                         </h3>
                       </div>
                     </div>
@@ -1347,7 +1347,7 @@ export default function App() {
                     <form className="request-form" onSubmit={handleServiceSubmit}>
                       <div className="form-grid">
                         <label className="full-span">
-                          Nome do servico
+                          Nome do serviço
                           <input
                             name="name"
                             value={serviceForm.name}
@@ -1357,7 +1357,7 @@ export default function App() {
                           />
                         </label>
                         <label className="full-span">
-                          Descricao
+                          Descrição
                           <textarea
                             name="description"
                             value={serviceForm.description}
@@ -1424,7 +1424,7 @@ export default function App() {
 
                       <div className="request-actions">
                         <button className="primary-button" type="submit" disabled={savingService}>
-                          {serviceForm.id ? "Salvar alteracoes" : "Criar servico"}
+                          {serviceForm.id ? "Salvar alterações" : "Criar serviço"}
                         </button>
                         {serviceForm.id && (
                           <button
@@ -1432,7 +1432,7 @@ export default function App() {
                             type="button"
                             onClick={resetServiceForm}
                           >
-                            Cancelar edicao
+                            Cancelar edição
                           </button>
                         )}
                       </div>
@@ -1442,14 +1442,14 @@ export default function App() {
                   <article className="panel-card">
                     <div className="panel-header">
                       <div>
-                        <p className="eyebrow">Catalogo</p>
-                        <h3>Servicos cadastrados</h3>
+                        <p className="eyebrow">Catálogo</p>
+                        <h3>Serviços cadastrados</h3>
                       </div>
                     </div>
 
                     <div className="list-stack compact-list">
                       {loadingAdmin ? (
-                        <div className="empty-state-card">Carregando servicos...</div>
+                        <div className="empty-state-card">Carregando serviços...</div>
                       ) : adminServices.length ? (
                         adminServices.map((service) => (
                           <article className="admin-list-row service-admin-row" key={service.id}>
@@ -1487,7 +1487,7 @@ export default function App() {
                                     type="button"
                                     onClick={resetServiceForm}
                                   >
-                                    Cancelar edicao
+                                    Cancelar edição
                                   </button>
                                 </>
                               ) : (
@@ -1513,7 +1513,7 @@ export default function App() {
                         ))
                       ) : (
                         <div className="empty-state-card">
-                          Nenhum servico cadastrado ainda.
+                          Nenhum serviço cadastrado ainda.
                         </div>
                       )}
                     </div>
@@ -1537,15 +1537,15 @@ export default function App() {
               >
                 <div className="section-heading">
                   <div>
-                    <p className="eyebrow">Orcamentos</p>
-                    <h3>Monte e envie orcamentos</h3>
+                    <p className="eyebrow">Orçamentos</p>
+                    <h3>Monte e envie orçamentos</h3>
                   </div>
                   <button
                     className="secondary-button"
                     type="button"
                     onClick={resetBudgetForm}
                   >
-                    Novo orcamento
+                    Novo orçamento
                   </button>
                 </div>
 
@@ -1553,8 +1553,8 @@ export default function App() {
                   <article className="panel-card">
                     <div className="panel-header">
                       <div>
-                        <p className="eyebrow">Criacao manual</p>
-                        <h3>Gerar orcamento</h3>
+                        <p className="eyebrow">Criação manual</p>
+                        <h3>Gerar orçamento</h3>
                       </div>
                     </div>
 
@@ -1581,31 +1581,31 @@ export default function App() {
                           />
                         </label>
                         <label className="full-span">
-                          Endereco
+                          Endereço
                           <input
                             name="address"
                             value={budgetForm.address}
                             onChange={handleBudgetFormChange}
-                            placeholder="Rua, numero e bairro"
+                            placeholder="Rua, número e bairro"
                             required
                           />
                         </label>
                         <label className="full-span">
-                          Observacoes
+                          Observações
                           <textarea
                             name="notes"
                             value={budgetForm.notes}
                             onChange={handleBudgetFormChange}
                             rows={4}
-                            placeholder="Informacoes adicionais para o cliente"
+                            placeholder="Informações adicionais para o cliente"
                           />
                         </label>
                       </div>
 
                       <div className="multi-service-header">
                         <div>
-                          <p className="eyebrow">Servicos do orcamento</p>
-                          <h4>Selecione um ou varios servicos</h4>
+                          <p className="eyebrow">Serviços do orçamento</p>
+                          <h4>Selecione um ou vários serviços</h4>
                         </div>
                         <span className="selection-count">
                           {selectedBudgetServiceObjects.length} selecionado(s)
@@ -1654,7 +1654,7 @@ export default function App() {
                       <article className="order-summary-card">
                         <div className="panel-header">
                           <div>
-                            <p className="eyebrow">Resumo do orcamento</p>
+                            <p className="eyebrow">Resumo do orçamento</p>
                             <h4>Valor calculado automaticamente</h4>
                           </div>
                           <span className="price-pill">
@@ -1664,7 +1664,7 @@ export default function App() {
 
                         <div className="summary-grid">
                           <div className="full-span">
-                            <span className="summary-label">Servicos</span>
+                            <span className="summary-label">Serviços</span>
                             <div
                               className={`summary-services ${
                                 selectedBudgetServiceObjects.length ? "" : "empty-summary"
@@ -1677,7 +1677,7 @@ export default function App() {
                                   </span>
                                 ))
                               ) : (
-                                <span>Selecione os servicos que faram parte do orcamento.</span>
+                                <span>Selecione os serviços que farão parte do orçamento.</span>
                               )}
                             </div>
                           </div>
@@ -1694,7 +1694,7 @@ export default function App() {
                             />
                           </label>
                           <div className="summary-total-box">
-                            <span className="summary-label">Total do orcamento</span>
+                            <span className="summary-label">Total do orçamento</span>
                             <strong>{formatCurrency(budgetFinalTotal)}</strong>
                           </div>
                         </div>
@@ -1708,7 +1708,7 @@ export default function App() {
 
                       <div className="request-actions">
                         <button className="primary-button" type="submit" disabled={savingBudget}>
-                          Criar orcamento
+                          Criar orçamento
                         </button>
                         <a
                           className={`whatsapp-panel-button ${
@@ -1741,14 +1741,14 @@ export default function App() {
                   <article className="panel-card">
                     <div className="panel-header">
                       <div>
-                        <p className="eyebrow">Historico</p>
-                        <h3>Orcamentos criados</h3>
+                        <p className="eyebrow">Histórico</p>
+                        <h3>Orçamentos criados</h3>
                       </div>
                     </div>
 
                     <div className="list-stack compact-list">
                       {loadingAdmin ? (
-                        <div className="empty-state-card">Carregando orcamentos...</div>
+                        <div className="empty-state-card">Carregando orçamentos...</div>
                       ) : budgets.length ? (
                         budgets.map((budget) => (
                           <article className="admin-list-row budget-row" key={budget.id}>
@@ -1758,7 +1758,7 @@ export default function App() {
                                 {budget.customer_phone} | {budget.customer_address}
                               </p>
                               <p className="muted">
-                                {budget.notes || "Sem observacoes adicionais."}
+                                {budget.notes || "Sem observações adicionais."}
                               </p>
                               <div className="order-service-list">
                                 {(budget.budget_items || []).map((item) => (
@@ -1815,7 +1815,7 @@ export default function App() {
                         ))
                       ) : (
                         <div className="empty-state-card">
-                          Nenhum orcamento cadastrado ainda.
+                          Nenhum orçamento cadastrado ainda.
                         </div>
                       )}
                     </div>
@@ -1876,7 +1876,7 @@ export default function App() {
                               </div>
                             </div>
                             <p className="muted">
-                              Ultimo pedido:{" "}
+                              Último pedido:{" "}
                               {lastOrder ? formatDate(lastOrder.requested_at) : "ainda sem pedidos"}
                             </p>
                           </article>
@@ -1893,7 +1893,7 @@ export default function App() {
 
           {!hasSupabaseEnv && (
             <div className="panel-card env-warning">
-              O app esta em modo local. Configure <code>VITE_SUPABASE_URL</code> e{" "}
+              O app está em modo local. Configure <code>VITE_SUPABASE_URL</code> e{" "}
               <code>VITE_SUPABASE_ANON_KEY</code> para conectar o banco real.
             </div>
           )}
@@ -1941,7 +1941,7 @@ function AdminGate({
         <p className="eyebrow">Painel interno</p>
         <h3>Entrar no administrativo</h3>
         <p className="muted">
-          Use um usuario do Supabase Auth que esteja cadastrado na tabela
+          Use um usuário do Supabase Auth que esteja cadastrado na tabela
           <code> admin_users </code>
           para acessar o painel.
         </p>
@@ -1989,13 +1989,13 @@ function buildWhatsAppHref({ name, phone, address, notes, services }) {
   }
 
   const message = [
-    "Ola, gostaria de solicitar um atendimento da JC Jardins.",
+    "Olá, gostaria de solicitar um atendimento da JC Jardins.",
     "",
     `Nome: ${name}`,
     `Telefone: ${phone}`,
-    `Endereco: ${address}`,
-    `Servicos: ${services.map((item) => item.name).join(", ")}`,
-    `Observacoes: ${notes || "Sem observacoes adicionais."}`
+    `Endereço: ${address}`,
+    `Serviços: ${services.map((item) => item.name).join(", ")}`,
+    `Observações: ${notes || "Sem observações adicionais."}`
   ].join("\n");
 
   return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
@@ -2014,17 +2014,17 @@ function buildBudgetWhatsAppHref({
   }
 
   const message = [
-    `Ola, ${name}.`,
-    "Segue seu orcamento da JC Jardins com atendimento profissional e servicos planejados para o seu espaco.",
+    `Olá, ${name}.`,
+    "Segue seu orçamento da JC Jardins, com atendimento profissional e serviços planejados para o seu espaço.",
     "",
     `Cliente: ${name}`,
     `Telefone: ${phone}`,
-    `Endereco: ${address}`,
-    `Servicos: ${services.map((item) => item.name).join(", ")}`,
+    `Endereço: ${address}`,
+    `Serviços: ${services.map((item) => item.name).join(", ")}`,
     `Valor total: ${formatCurrency(totalAmount)}`,
-    `Observacoes: ${notes || "Sem observacoes adicionais."}`,
+    `Observações: ${notes || "Sem observações adicionais."}`,
     "",
-    "Se quiser, podemos agendar a execucao e confirmar os detalhes pelo WhatsApp."
+    "Se quiser, podemos agendar a execução e confirmar os detalhes pelo WhatsApp."
   ].join("\n");
 
   return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
@@ -2048,7 +2048,7 @@ function formatCurrency(value) {
 }
 
 function formatDate(value) {
-  if (!value) return "Data nao informada";
+  if (!value) return "Data não informada";
   return new Intl.DateTimeFormat("pt-BR", { dateStyle: "medium" }).format(
     new Date(value)
   );
@@ -2058,7 +2058,7 @@ function formatStatusLabel(status) {
   return {
     pendente: "Pendente",
     "em andamento": "Em andamento",
-    concluido: "Concluido"
+    concluido: "Concluído"
   }[status] || status;
 }
 

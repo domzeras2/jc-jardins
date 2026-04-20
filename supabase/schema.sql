@@ -86,10 +86,10 @@ create index if not exists admin_users_user_id_idx on public.admin_users(user_id
 
 insert into public.services (slug, name, description, base_price, icon, sort_order)
 values
-  ('corte-de-grama', 'Corte de grama', 'Corte uniforme, acabamento e organizacao do gramado.', 160, 'grass', 1),
-  ('limpeza-de-terreno', 'Limpeza de terreno', 'Remocao de mato, folhas, galhos e limpeza geral do terreno.', 220, 'terrain', 2),
-  ('poda-de-arvores', 'Poda de arvores', 'Poda cuidadosa para melhorar seguranca, visual e saude das plantas.', 280, 'shears', 3),
-  ('manutencao-de-jardim', 'Manutencao de jardim', 'Manutencao periodica com capricho para manter o jardim sempre bonito.', 190, 'leaf', 4)
+  ('corte-de-grama', 'Corte de grama', 'Corte uniforme, acabamento e organização do gramado.', 160, 'grass', 1),
+  ('limpeza-de-terreno', 'Limpeza de terreno', 'Remoção de mato, folhas, galhos e limpeza geral do terreno.', 220, 'terrain', 2),
+  ('poda-de-arvores', 'Poda de árvores', 'Poda cuidadosa para melhorar a segurança, o visual e a saúde das plantas.', 280, 'shears', 3),
+  ('manutencao-de-jardim', 'Manutenção de jardim', 'Manutenção periódica com capricho para manter o jardim sempre bonito.', 190, 'leaf', 4)
 on conflict (slug) do update
 set
   name = excluded.name,

@@ -1,6 +1,6 @@
 # JC Jardins
 
-Projeto pronto para producao com foco em simplicidade, baixo custo e facilidade de manutencao.
+Projeto pronto para produção, com foco em simplicidade, baixo custo e facilidade de manutenção.
 
 ## Stack escolhida
 
@@ -8,14 +8,14 @@ Projeto pronto para producao com foco em simplicidade, baixo custo e facilidade 
 - `Backend/Banco`: Supabase
 - `Banco de dados`: PostgreSQL gerenciado pelo Supabase
 - `Deploy`: Vercel para o frontend
-- `Painel administrativo`: mesma aplicacao web, com login via Supabase Auth
+- `Painel administrativo`: mesma aplicação web, com login via Supabase Auth
 
 ## Por que essa stack
 
-- `Vite + React` entrega um frontend moderno, rapido e facil de evoluir para PWA ou app com React Native/Expo no futuro.
-- `Supabase` evita montar e manter um backend Node separado agora. Ele ja entrega banco, API, Auth e regras de acesso.
-- `Vercel` e uma das formas mais simples e economicas de publicar um projeto pequeno em React.
-- Essa combinacao reduz custo inicial, simplifica manutencao e continua escalavel.
+- `Vite + React` entrega um frontend moderno, rápido e fácil de evoluir para PWA ou app com React Native/Expo no futuro.
+- `Supabase` evita montar e manter um backend Node separado agora. Ele já entrega banco, API, Auth e regras de acesso.
+- `Vercel` é uma das formas mais simples e econômicas de publicar um projeto pequeno em React.
+- Essa combinação reduz o custo inicial, simplifica a manutenção e continua escalável.
 
 ## Estrutura do projeto
 
@@ -33,7 +33,7 @@ Projeto pronto para producao com foco em simplicidade, baixo custo e facilidade 
 
 ## Banco de dados
 
-O schema esta em [supabase/schema.sql](C:\Users\gabri\Documents\New project\supabase\schema.sql).
+O schema está em [supabase/schema.sql](C:\Users\gabri\Documents\New project\supabase\schema.sql).
 
 ### Tabelas criadas
 
@@ -99,15 +99,15 @@ O schema esta em [supabase/schema.sql](C:\Users\gabri\Documents\New project\supa
   - full_name
   - created_at
 
-### Relacao entre tabelas
+### Relação entre tabelas
 
-- um `client` pode ter varios `orders`
-- um `order` pode ter varios `order_items`
+- um `client` pode ter vários `orders`
+- um `order` pode ter vários `order_items`
 - cada `order_item` aponta para um `service`
-- um `client` pode ter varios `budgets`
-- um `budget` pode ter varios `budget_items`
+- um `client` pode ter vários `budgets`
+- um `budget` pode ter vários `budget_items`
 
-Isso deixa o sistema pronto para pedidos com varios servicos e facilita manutencao futura.
+Isso deixa o sistema pronto para pedidos com vários serviços e facilita a manutenção futura.
 
 ## Painel administrativo
 
@@ -115,7 +115,7 @@ O painel interno permite:
 
 - visualizar clientes cadastrados
 - visualizar pedidos recebidos
-- visualizar quais servicos foram escolhidos
+- visualizar quais serviços foram escolhidos
 - alterar o status do pedido para:
   - `pendente`
   - `em andamento`
@@ -125,7 +125,7 @@ O acesso administrativo usa `Supabase Auth` com e-mail e senha.
 
 ## Como rodar localmente
 
-### 1. Instalar dependencias
+### 1. Instalar dependências
 
 ```bash
 npm install
@@ -141,7 +141,7 @@ VITE_SUPABASE_ANON_KEY=SUA_CHAVE_ANON
 VITE_WHATSAPP_NUMBER=554198370558
 ```
 
-### O que vai em cada variavel
+### O que vai em cada variável
 
 - `VITE_SUPABASE_URL`
   Valor exato do campo `Project URL` do seu projeto Supabase.
@@ -149,12 +149,12 @@ VITE_WHATSAPP_NUMBER=554198370558
   `https://abcxyzcompany.supabase.co`
 
 - `VITE_SUPABASE_ANON_KEY`
-  Valor exato da chave publica `anon public`.
-  Voce encontra em:
+  Valor exato da chave pública `anon public`.
+  Você encontra em:
   `Supabase > Project Settings > API`
 
 - `VITE_WHATSAPP_NUMBER`
-  Numero no formato internacional, sem espacos nem simbolos.
+  Número no formato internacional, sem espaços nem símbolos.
   Para este projeto:
   `554198370558`
 
@@ -164,13 +164,13 @@ VITE_WHATSAPP_NUMBER=554198370558
 npm run dev
 ```
 
-### 4. Build de producao
+### 4. Build de produção
 
 ```bash
 npm run build
 ```
 
-### 5. Visualizar build localmente
+### 5. Visualizar o build localmente
 
 ```bash
 npm run preview
@@ -189,23 +189,23 @@ npm run preview
 ### 2. Rodar o schema SQL
 
 1. No painel do Supabase, abra `SQL Editor`
-2. Cole o conteudo de [supabase/schema.sql](C:\Users\gabri\Documents\New project\supabase\schema.sql)
+2. Cole o conteúdo de [supabase/schema.sql](C:\Users\gabri\Documents\New project\supabase\schema.sql)
 3. Execute o script
 
 Isso vai:
 
 - criar as tabelas
-- criar a funcao publica para registrar pedidos
-- inserir os servicos padrao
-- ativar politicas de seguranca
+- criar a função pública para registrar pedidos
+- inserir os serviços padrão
+- ativar políticas de segurança
 
-### 3. Criar o usuario admin
+### 3. Criar o usuário admin
 
 1. No Supabase, abra `Authentication`
-2. Crie um usuario manualmente com e-mail e senha
-3. Esse usuario sera usado para entrar no painel interno
+2. Crie um usuário manualmente com e-mail e senha
+3. Esse usuário será usado para entrar no painel interno
 
-### 4. Conectar o projeto com o Supabase
+### 4. Conectar o projeto ao Supabase
 
 Depois de criar o projeto e rodar o SQL:
 
@@ -213,55 +213,55 @@ Depois de criar o projeto e rodar o SQL:
 2. Copie `anon public key`
 3. Cole os dois no arquivo `.env`
 4. Rode `npm run dev`
-5. O frontend vai usar automaticamente [src/lib/supabase.js](C:\Users\gabri\Documents\New project\src\lib\supabase.js) para conectar no banco
+5. O frontend vai usar automaticamente [src/lib/supabase.js](C:\Users\gabri\Documents\New project\src\lib\supabase.js) para conectar ao banco
 
-## Como publicar online da forma mais facil
+## Como publicar online da forma mais fácil
 
 ### Plataforma recomendada
 
 - `Frontend`: Vercel
 - `Banco/Auth`: Supabase
 
-Essa e a opcao mais simples e economica para um projeto pequeno que esta comecando.
+Essa é a opção mais simples e econômica para um projeto pequeno que está começando.
 
 ### Passo a passo de deploy
 
 1. Crie um projeto no Supabase.
 2. Rode o SQL de [supabase/schema.sql](C:\Users\gabri\Documents\New project\supabase\schema.sql).
-3. Crie um usuario admin em `Supabase Authentication`.
+3. Crie um usuário admin em `Supabase Authentication`.
 4. Teste localmente com:
    - `npm install`
    - `npm run dev`
-5. Suba o projeto para um repositorio no GitHub.
+5. Suba o projeto para um repositório no GitHub.
 6. Acesse [Vercel](https://vercel.com/).
 7. Clique em `Add New Project`.
-8. Importe o repositorio.
+8. Importe o repositório.
 9. Em `Environment Variables`, adicione:
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
    - `VITE_WHATSAPP_NUMBER`
-10. Confirme que a Vercel usara:
+10. Confirme que a Vercel usará:
    - `Build Command`: `npm run build`
    - `Output Directory`: `dist`
 11. Clique em `Deploy`.
 
-O arquivo [vercel.json](C:\Users\gabri\Documents\New project\vercel.json) ja foi adicionado para deixar essa configuracao explicita.
+O arquivo [vercel.json](C:\Users\gabri\Documents\New project\vercel.json) já foi adicionado para deixar essa configuração explícita.
 
-### Checklist rapido antes de publicar
+### Checklist rápido antes de publicar
 
 - projeto criado no Supabase
 - SQL executado no `SQL Editor`
-- usuario admin criado
+- usuário admin criado
 - `.env` testado localmente
-- pedido publico salvando no banco
+- pedido público salvando no banco
 - painel admin abrindo e atualizando status
-- variaveis de ambiente cadastradas na Vercel
+- variáveis de ambiente cadastradas na Vercel
 
 ## WhatsApp
 
-O projeto mantem o botao de WhatsApp funcionando com:
+O projeto mantém o botão de WhatsApp funcionando com:
 
-- numero: `41 9837-0558`
+- número: `41 9837-0558`
 - formato usado internamente: `554198370558`
 
 O cliente pode:
@@ -269,9 +269,9 @@ O cliente pode:
 - abrir o WhatsApp direto
 - finalizar o pedido com mensagem pronta contendo:
   - nome
-  - endereco
-  - servicos selecionados
-  - observacoes
+- endereço
+- serviços selecionados
+- observações
 
 ## Responsividade
 
@@ -283,39 +283,39 @@ O layout foi organizado para funcionar em:
 
 ## Futuro app
 
-A estrutura atual facilita evolucao para:
+A estrutura atual facilita a evolução para:
 
 - `PWA`
 - `app mobile com React Native / Expo`
 
 Motivo:
 
-- o frontend ja esta separado em React
-- a camada de dados esta no Supabase
-- a logica de negocio pode ser reaproveitada
+- o frontend já está separado em React
+- a camada de dados está no Supabase
+- a lógica de negócio pode ser reaproveitada
 
 ## Arquivos principais
 
-- [package.json](C:\Users\gabri\Documents\New project\package.json): scripts e dependencias
+- [package.json](C:\Users\gabri\Documents\New project\package.json): scripts e dependências
 - [src/App.jsx](C:\Users\gabri\Documents\New project\src\App.jsx): interface principal do site e painel
-- [src/lib/supabase.js](C:\Users\gabri\Documents\New project\src\lib\supabase.js): conexao com Supabase
+- [src/lib/supabase.js](C:\Users\gabri\Documents\New project\src\lib\supabase.js): conexão com Supabase
 - [src/styles.css](C:\Users\gabri\Documents\New project\src\styles.css): visual do projeto
 - [supabase/schema.sql](C:\Users\gabri\Documents\New project\supabase\schema.sql): estrutura do banco
 
-## Observacao importante
+## Observação importante
 
-Este ambiente atual nao tem `node`/`npm` disponiveis para eu instalar dependencias e executar o build aqui dentro, entao eu deixei toda a estrutura pronta, mas voce ainda vai precisar rodar:
+Este ambiente atual não tem `node`/`npm` disponíveis para eu instalar dependências e executar o build aqui dentro, então eu deixei toda a estrutura pronta, mas você ainda vai precisar rodar:
 
 ```bash
 npm install
 npm run dev
 ```
 
-na sua maquina para testar localmente antes do deploy.
+na sua máquina para testar localmente antes do deploy.
 
 ## Resumo direto
 
-Se voce quer o caminho mais simples para colocar online:
+Se você quer o caminho mais simples para colocar online:
 
 1. Crie o projeto no Supabase
 2. Rode o SQL
@@ -328,22 +328,22 @@ Se voce quer o caminho mais simples para colocar online:
 
 ## Painel administrativo completo
 
-O painel agora foi estruturado com quatro areas internas:
+O painel agora foi estruturado com quatro áreas internas:
 
 - `Dashboard`
 - `Pedidos`
-- `Servicos`
+- `Serviços`
 - `Clientes`
 
 ### Recursos do painel
 
 - login com `Supabase Auth`
-- validacao extra pela tabela `admin_users`
+- validação extra pela tabela `admin_users`
 - listagem de pedidos com troca de status
-- cadastro, edicao e remocao de servicos
-- listagem de clientes com historico basico de pedidos
+- cadastro, edição e remoção de serviços
+- listagem de clientes com histórico básico de pedidos
 
-### Tabela adicional necessaria
+### Tabela adicional necessária
 
 - `admin_users`
   - id
@@ -352,11 +352,11 @@ O painel agora foi estruturado com quatro areas internas:
   - full_name
   - created_at
 
-### Como criar o primeiro usuario admin
+### Como criar o primeiro usuário admin
 
 1. Abra `Authentication > Users` no Supabase.
-2. Crie o usuario com e-mail e senha.
-3. Copie o `UUID` desse usuario.
+2. Crie o usuário com e-mail e senha.
+3. Copie o `UUID` desse usuário.
 4. Abra o `SQL Editor`.
 5. Rode este SQL trocando os valores:
 
@@ -369,15 +369,15 @@ values (
 );
 ```
 
-Depois disso, esse usuario ja pode fazer login no painel.
+Depois disso, esse usuário já pode fazer login no painel.
 
-### Seguranca aplicada
+### Segurança aplicada
 
-As politicas do arquivo [supabase/schema.sql](C:\Users\gabri\Documents\New project\supabase\schema.sql) agora usam a funcao `public.is_admin()`.
+As políticas do arquivo [supabase/schema.sql](C:\Users\gabri\Documents\New project\supabase\schema.sql) agora usam a função `public.is_admin()`.
 
 Na pratica:
 
-- usuarios publicos podem ver apenas servicos ativos
-- usuarios autenticados comuns nao entram no painel se nao estiverem em `admin_users`
+- usuários públicos podem ver apenas serviços ativos
+- usuários autenticados comuns não entram no painel se não estiverem em `admin_users`
 - somente admins podem ler clientes, pedidos e itens de pedido
-- somente admins podem criar, editar e remover servicos
+- somente admins podem criar, editar e remover serviços
